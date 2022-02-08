@@ -43,10 +43,12 @@ class Neuron:
         
     #Calculate the output of the neuron should save the input and output for back-propagation.   
     def calculate(self, inputs):
+
+
         net = np.sum(np.multiply(self.weights[:-1], inputs)) + self.weights[-1]
         neuron_output = self.activate(net)
 
-        # Save values for use in backprop later
+        # Save feedforward values for use in backprop later
         self.inputs = inputs
         self.output = neuron_output
 
@@ -94,14 +96,39 @@ class Neuron:
         
 #A fully connected layer        
 class FullyConnected:
-    #initialize with the number of neurons in the layer, their activation,the input size, the leraning rate and a 2d matrix of weights (or else initilize randomly)
+    #initialize with the number of neurons in the layer, their activation,the input size, the leraning rate and a 2d matrix of weights (or else initialize randomly)
     def __init__(self,numOfNeurons, activation, input_num, lr, weights=None):
-        print('constructor') 
+        self.numOfNeurons = numOfNeurons
+        self.activation = activation
+        self.input_num = input_num
+        self.lr = lr
+        self.weights = weights if weights is not None else np.random.rand(input_num+1)
+        self.neurons = None
         
-        
-    #calcualte the output of all the neurons in the layer and return a vector with those values (go through the neurons and call the calcualte() method)      
+    #calculate the output of all the neurons in the layer and return a vector with those values (go through the neurons and call the calcualte() method)      
     def calculate(self, input):
-        print('calculate') 
+        
+        neurons =[]
+        neurons_output = []
+        for i in range(self.input_num):
+
+            neuron = Neuron(self.activation, self.input_num, self.lr, self.weights)
+            k = neuron.calculate(input)
+
+            neurons.append(neuron)
+            neurons_output.append(k)
+        
+
+        self.neurons = neurons
+        
+        # Test Code
+        #print(neuron.lr)
+        #print(neuron.input_num)
+        #print(neuron.activation)
+        #print(neuron.weights)
+        #print(input)
+        #print(neurons_output)
+
         
             
     #given the next layer's w*delta, should run through the neurons calling calcpartialderivative() for each (with the correct value), sum up its ownw*delta, and then update the wieghts (using the updateweight() method). I should return the sum of w*delta.          
@@ -113,7 +140,7 @@ class FullyConnected:
 class NeuralNetwork:
     #initialize with the number of layers, number of neurons in each layer (vector), input size, activation (for each layer), the loss function, the learning rate and a 3d matrix of weights weights (or else initialize randomly)
     def __init__(self,numOfLayers,numOfNeurons, inputSize, activation, loss, lr, weights=None):
-        print('constructor') 
+         
     
     #Given an input, calculate the output (using the layers calculate() method)
     def calculate(self,input):
@@ -134,47 +161,56 @@ class NeuralNetwork:
 if __name__=="__main__":
     if (len(sys.argv)<2):
         # Test Code for Neuron Class
-        print("Test Code for Neuron Class")
-        neuron_test = Neuron("logistic", 3, 0.01, [0.2, 0.3, 0.4, 0.5])
-        #neuron_test = Neuron("logistic", 3, 0.01)
-        print(neuron_test.lr)
-        print(neuron_test.input_num)
-        print(neuron_test.activation)
-        print(neuron_test.weights)
+        #print("Test Code for Neuron Class")
+        #neuron_test = Neuron("logistic", 3, 0.01, [0.2, 0.3, 0.4, 0.5])
+        ##neuron_test = Neuron("logistic", 3, 0.01)
+        #print(neuron_test.lr)
+        #print(neuron_test.input_num)
+        #print(neuron_test.activation)
+        #print(neuron_test.weights)
 
-        # Testing the "activate" method
-        print("Testing of activate")
-        act_func_val = neuron_test.activate(5)
-        print(act_func_val)
+        ## Testing the "activate" method
+        #print("Testing of activate")
+        #act_func_val = neuron_test.activate(5)
+        #print(act_func_val)
 
-        # Testing the "calculate" method
-        print("Testing of calculate")
-        calc_vect = neuron_test.calculate(np.array([1, 2, 3]))
-        print(calc_vect)
-        print(neuron_test.inputs)
-        print(neuron_test.output)
+        ## Testing the "calculate" method
+        #print("Testing of calculate")
+        #calc_vect = neuron_test.calculate(np.array([1, 2, 3]))
+        #print(calc_vect)
+        #print(neuron_test.inputs)
+        #print(neuron_test.output)
 
-        # Testing the "activationderivative" method
-        print("Testing of activationderivative")
-        actderiv_val = neuron_test.activationderivative()
-        print(actderiv_val)
+        ## Testing the "activationderivative" method
+        #print("Testing of activationderivative")
+        #actderiv_val = neuron_test.activationderivative()
+        #print(actderiv_val)
 
-        # Testing "calcpartialderivative" method
-        print("Testing calcpartialderivative")
-        prev_deltas = neuron_test.calcpartialderivative(np.array([1, 1]))
-        print(prev_deltas)
+        ## Testing "calcpartialderivative" method
+        #print("Testing calcpartialderivative")
+        #prev_deltas = neuron_test.calcpartialderivative(np.array([1, 1]))
+        #print(prev_deltas)
 
-        # Testing of "updateweights" method
-        print("Testing of updateweights")
-        updated_weights = neuron_test.updateweight()
-        print(updated_weights)
+        ## Testing of "updateweights" method
+        #print("Testing of updateweights")
+        #updated_weights = neuron_test.updateweight()
+        #print(updated_weights)
+
+
+
+
+        # Test Code for Fully-Connected Layer Class
+        #self,numOfNeurons, activation, input_num, lr, weights=None
+        layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([0.2, 0.3, 0.4, 0.5]))
+        layer_test.calculate([1, 2, 3])
+
 
         
     elif (sys.argv[1]=='example'):
         print('run example from class (single step)')
         w=np.array([[[.15,.2,.35],[.25,.3,.35]],[[.4,.45,.6],[.5,.55,.6]]])
-        x==np.array([0.05,0.1])
-        np.array([0.01,0.99])
+        x=np.array([0.05,0.1])
+        y=np.array([0.01,0.99])
         
     elif(sys.argv[1]=='and'):
         print("learn and")
