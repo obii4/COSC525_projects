@@ -121,7 +121,7 @@ class FullyConnected:
 
         self.neurons = neurons
         
-        # Test Code
+        ##Test Code
         #print(neuron.lr)
         #print(neuron.input_num)
         #print(neuron.activation)
@@ -140,7 +140,27 @@ class FullyConnected:
 class NeuralNetwork:
     #initialize with the number of layers, number of neurons in each layer (vector), input size, activation (for each layer), the loss function, the learning rate and a 3d matrix of weights weights (or else initialize randomly)
     def __init__(self,numOfLayers,numOfNeurons, inputSize, activation, loss, lr, weights=None):
+         self.numOfLayers = numOfLayers
+         self.numOfNeurons = numOfNeurons
+         self.inputSize = inputSize
+         self.activation = activation
+         self.loss = loss
+         self.lr = lr
          
+         if weights is not None:
+             self.weights = weights 
+         else:
+            weights = []
+            for i in range(numOfLayers):
+                if i == 0:
+                    temp = np.random.rand(numOfNeurons[0], inputSize+1)
+                    #temp = inputSize * numOfNeurons[0] + numOfNeurons[0]
+                    weights.append(temp)
+                else:
+                    temp = np.random.rand(numOfNeurons[i-1]+1, numOfNeurons[i])
+                    #temp = numOfNeurons[i-1] * numOfNeurons[i] + numOfNeurons[i]
+                    weights.append(temp)
+            self.weights = np.array(weights, dtype=object)
     
     #Given an input, calculate the output (using the layers calculate() method)
     def calculate(self,input):
@@ -203,6 +223,11 @@ if __name__=="__main__":
         #self,numOfNeurons, activation, input_num, lr, weights=None
         layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([0.2, 0.3, 0.4, 0.5]))
         layer_test.calculate([1, 2, 3])
+
+        # Test Code for NeuralNetwork
+        # self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None):
+        network_test = NeuralNetwork(3, np.array([2, 4, 2]), 2, ["logistic", "logistic", "linear"], "MSE", 0.01)
+        print(network_test.weights)
 
 
         
