@@ -68,11 +68,28 @@ class Neuron:
     
     #This method calculates the partial derivative for each weight and returns the delta*w to be used in the previous layer
     def calcpartialderivative(self, wtimesdelta):
-        print('calcpartialderivative') 
+        # Assuming wtimesdelta is a lx1 vector of w x delta values from the next layer of size lx1 (Need to figure out where this will come from)!!!
+        actderiv = self.activationderivative()
+
+        # (eqn 2 on summary page)
+        prev_delta = np.sum(actderiv * wtimesdelta)
+
+        return prev_delta
     
     #Simply update the weights using the partial derivatives and the learning weight
     def updateweight(self):
-        print('updateweight')
+        print(self.weights)
+
+        # Hardcoded wtimesdelta needs to change!!! Conditional here for if the neuron is before the final layer or not!!!
+        prev_delta = self.calcpartialderivative(np.array([2, 2, 2]))
+
+        # Partial derivative of Error wrt to weights (eqn 3 on summary page)
+        weights_partial_derivatives = prev_delta * self.inputs
+
+        # Weight update calculation (eqn 4 on summary page)
+        self.weights[:-1] = self.weights[:-1] - self.lr * weights_partial_derivatives
+
+        return self.weights
 
         
 #A fully connected layer        
@@ -117,26 +134,40 @@ class NeuralNetwork:
 if __name__=="__main__":
     if (len(sys.argv)<2):
         # Test Code for Neuron Class
-        #neuron_test = Neuron("logistic", 3, 0.01, [0.2, 0.3, 0.4, 0.5])
-        neuron_test = Neuron("logistic", 3, 0.01)
+        print("Test Code for Neuron Class")
+        neuron_test = Neuron("logistic", 3, 0.01, [0.2, 0.3, 0.4, 0.5])
+        #neuron_test = Neuron("logistic", 3, 0.01)
         print(neuron_test.lr)
         print(neuron_test.input_num)
         print(neuron_test.activation)
         print(neuron_test.weights)
 
         # Testing the "activate" method
+        print("Testing of activate")
         act_func_val = neuron_test.activate(5)
         print(act_func_val)
 
         # Testing the "calculate" method
-        calc_vect = neuron_test.calculate([1, 2, 3])
+        print("Testing of calculate")
+        calc_vect = neuron_test.calculate(np.array([1, 2, 3]))
         print(calc_vect)
         print(neuron_test.inputs)
         print(neuron_test.output)
 
         # Testing the "activationderivative" method
+        print("Testing of activationderivative")
         actderiv_val = neuron_test.activationderivative()
         print(actderiv_val)
+
+        # Testing "calcpartialderivative" method
+        print("Testing calcpartialderivative")
+        prev_deltas = neuron_test.calcpartialderivative(np.array([1, 1]))
+        print(prev_deltas)
+
+        # Testing of "updateweights" method
+        print("Testing of updateweights")
+        updated_weights = neuron_test.updateweight()
+        print(updated_weights)
 
         
     elif (sys.argv[1]=='example'):
