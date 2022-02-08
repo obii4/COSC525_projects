@@ -22,7 +22,7 @@ class Neuron:
         self.lr = lr
 
         # the last value of the weights vector is the bias
-        self.weights = weights if weights is not None else np.random.rand(input_num)
+        self.weights = weights if weights is not None else np.random.rand(input_num+1)
 
         #initialize inputs and outputs arrays for saving feedforward values for later use in backprop
         self.inputs = None
@@ -43,7 +43,8 @@ class Neuron:
         
     #Calculate the output of the neuron should save the input and output for back-propagation.   
     def calculate(self, inputs):
-        neuron_output = np.sum(np.multiply(self.weights[:-1], inputs)) + self.weights[-1]
+        net = np.sum(np.multiply(self.weights[:-1], inputs)) + self.weights[-1]
+        neuron_output = self.activate(net)
 
         # Save values for use in backprop later
         self.inputs = inputs
@@ -116,8 +117,8 @@ class NeuralNetwork:
 if __name__=="__main__":
     if (len(sys.argv)<2):
         # Test Code for Neuron Class
-        neuron_test = Neuron("logistic", 4, 0.01, [0.2, 0.3, 0.4, 0.5])
-        #neuron_test = Neuron("logistic", 4, 0.01)
+        #neuron_test = Neuron("logistic", 3, 0.01, [0.2, 0.3, 0.4, 0.5])
+        neuron_test = Neuron("logistic", 3, 0.01)
         print(neuron_test.lr)
         print(neuron_test.input_num)
         print(neuron_test.activation)
