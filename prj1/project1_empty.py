@@ -44,8 +44,10 @@ class Neuron:
     #Calculate the output of the neuron should save the input and output for back-propagation.   
     def calculate(self, inputs):
 
-
+        # Pre activation function matrix math (vectors -> scalar)
         net = np.sum(np.multiply(self.weights[:-1], inputs)) + self.weights[-1]
+
+        # Output from neuron after activation function (scalar -> scalar)
         neuron_output = self.activate(net)
 
         # Save feedforward values for use in backprop later
@@ -53,7 +55,6 @@ class Neuron:
         self.output = neuron_output
 
         return neuron_output
-
 
     #This method returns the derivative of the activation function with respect to the net   
     def activationderivative(self):
@@ -102,33 +103,30 @@ class FullyConnected:
         self.activation = activation
         self.input_num = input_num
         self.lr = lr
-        self.weights = weights if weights is not None else np.random.rand(input_num+1)
+        self.weights = weights if weights is not None else np.random.rand(input_num+1) # This may need work? It is 1D right now
+
+        # list of neuron classes created in calculate() (May or may not be useful when coding backprop)
         self.neurons = None
         
-    #calculate the output of all the neurons in the layer and return a vector with those values (go through the neurons and call the calcualte() method)      
+    #calculate the output of all the neurons in the layer and return a vector with those values (go through the neurons and call the calculate() method)      
     def calculate(self, input):
         
         neurons =[]
         neurons_output = []
-        for i in range(self.input_num):
 
-            neuron = Neuron(self.activation, self.input_num, self.lr, self.weights)
-            k = neuron.calculate(input)
+        # Create neurons and calculate their outputs then store the neuron classes and their outputs (Do we need to store the neuron classes?)
+        for i in range(self.numOfNeurons):
 
-            neurons.append(neuron)
-            neurons_output.append(k)
+            _neuron_i = Neuron(self.activation, self.input_num, self.lr, self.weights[i,:])
+            _output_i = _neuron_i.calculate(input)
+
+            neurons.append(_neuron_i)
+            neurons_output.append(_output_i)
         
-
+        # May not need this, see description in attributes
         self.neurons = neurons
-        
-        ##Test Code
-        #print(neuron.lr)
-        #print(neuron.input_num)
-        #print(neuron.activation)
-        #print(neuron.weights)
-        #print(input)
-        #print(neurons_output)
 
+        return neurons_output
         
             
     #given the next layer's w*delta, should run through the neurons calling calcpartialderivative() for each (with the correct value), sum up its ownw*delta, and then update the wieghts (using the updateweight() method). I should return the sum of w*delta.          
@@ -146,25 +144,59 @@ class NeuralNetwork:
          self.activation = activation
          self.loss = loss
          self.lr = lr
+
+         # List of layer classes created in calculate method (May or may not be useful when coding backprop)
+         self.layers = None
+
+         # initialize layers outputs attribute from calculate method
+         self.layers_output = None
          
+         # Use given weights else create a 3D matrix of weights 
          if weights is not None:
              self.weights = weights 
          else:
+            # Can make this simpler/shorter by appending inputSize to the beginning of the numOfNeurons attribute then conditional isn't needed 
             weights = []
             for i in range(numOfLayers):
                 if i == 0:
+                    # weights & biases of first layer
                     temp = np.random.rand(numOfNeurons[0], inputSize+1)
-                    #temp = inputSize * numOfNeurons[0] + numOfNeurons[0]
                     weights.append(temp)
                 else:
-                    temp = np.random.rand(numOfNeurons[i-1]+1, numOfNeurons[i])
-                    #temp = numOfNeurons[i-1] * numOfNeurons[i] + numOfNeurons[i]
+                    # weights & biases for all other layers
+                    temp = np.random.rand(numOfNeurons[i], numOfNeurons[i-1]+1)
                     weights.append(temp)
-            self.weights = np.array(weights, dtype=object)
+
+            #Which is better to use??
+            #self.weights = np.array(weights, dtype=object)
+            self.weights = weights
     
     #Given an input, calculate the output (using the layers calculate() method)
     def calculate(self,input):
-        print('constructor')
+        
+        layers =[]
+        layers_output = []
+        for i in range(self.numOfLayers):
+
+            if i == 0:
+                # First layer uses the input given by the user
+                _layer_i = FullyConnected(self.numOfNeurons[i], self.activation[i], self.inputSize, self.lr, self.weights[i])
+                _layer_output_i = _layer_i.calculate(input)
+            
+            else:
+                # Subsequent layers use the output of previous layers as inputs
+                _layer_i = FullyConnected(self.numOfNeurons[i], self.activation[i], self.inputSize, self.lr, self.weights[i])
+                _layer_output_i = _layer_i.calculate(layers_output[i-1])
+
+            # May not need this, see description in attributes
+            layers.append(_layer_i)
+            
+            # Need this for creating the 2D matrix of all NN layer outputs
+            layers_output.append(_layer_output_i)
+
+        self.layers = layers
+        self.layers_output = layers_output
+        
         
     #Given a predicted output and ground truth output simply return the loss (depending on the loss function)
     def calculateloss(self,yp,y):
@@ -180,7 +212,14 @@ class NeuralNetwork:
 
 if __name__=="__main__":
     if (len(sys.argv)<2):
+
+
+
         # Test Code for Neuron Class
+
+
+
+
         #print("Test Code for Neuron Class")
         #neuron_test = Neuron("logistic", 3, 0.01, [0.2, 0.3, 0.4, 0.5])
         ##neuron_test = Neuron("logistic", 3, 0.01)
@@ -190,11 +229,13 @@ if __name__=="__main__":
         #print(neuron_test.weights)
 
         ## Testing the "activate" method
+
         #print("Testing of activate")
         #act_func_val = neuron_test.activate(5)
         #print(act_func_val)
 
         ## Testing the "calculate" method
+
         #print("Testing of calculate")
         #calc_vect = neuron_test.calculate(np.array([1, 2, 3]))
         #print(calc_vect)
@@ -202,16 +243,19 @@ if __name__=="__main__":
         #print(neuron_test.output)
 
         ## Testing the "activationderivative" method
+
         #print("Testing of activationderivative")
         #actderiv_val = neuron_test.activationderivative()
         #print(actderiv_val)
 
         ## Testing "calcpartialderivative" method
+
         #print("Testing calcpartialderivative")
         #prev_deltas = neuron_test.calcpartialderivative(np.array([1, 1]))
         #print(prev_deltas)
 
         ## Testing of "updateweights" method
+
         #print("Testing of updateweights")
         #updated_weights = neuron_test.updateweight()
         #print(updated_weights)
@@ -219,16 +263,56 @@ if __name__=="__main__":
 
 
 
-        # Test Code for Fully-Connected Layer Class
+        ### Test Code for Fully-Connected Layer Class
+
+
+
+
         #self,numOfNeurons, activation, input_num, lr, weights=None
-        layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([0.2, 0.3, 0.4, 0.5]))
-        layer_test.calculate([1, 2, 3])
+        ##print("Testing the FullyConnected Layer Class")
+        ##layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([0.2, 0.3, 0.4, 0.5]))
+        ##layer_test.calculate([[1, 2, 3], [1, 2, 3]])
 
-        # Test Code for NeuralNetwork
-        # self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None):
-        network_test = NeuralNetwork(3, np.array([2, 4, 2]), 2, ["logistic", "logistic", "linear"], "MSE", 0.01)
-        print(network_test.weights)
 
+
+
+        ### Test Code for NeuralNetwork Class 
+        
+
+        
+
+        # This setup DOES work
+        W = np.array([np.array([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]),
+                      np.array([[0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2]]),
+                      np.array([[0.1, 0.1, 0.1, 0.1, 0.1],[0.1, 0.1, 0.1, 0.1, 0.1]])], dtype=object)
+
+        ## This setup does NOT work
+        #W = np.array([[[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]],
+                      #[[0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2]],
+                      #[[0.1, 0.1, 0.1, 0.1, 0.1],[0.1, 0.1, 0.1, 0.1, 0.1]]])
+        
+
+
+        ## 2 x 4 x 2 network size
+
+        # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
+        network_test = NeuralNetwork(3, np.array([2, 4, 2]), 2, ["logistic", "logistic", "linear"], "MSE", 0.01, W)
+
+        # params: self, input
+        network_output = network_test.calculate(np.array([[1, 2]]))
+        print(network_test.layers_output)
+
+
+        # single perceptron test
+
+        W2 = np.array([np.array([[5, 6, 10]])])
+        
+        # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
+        network_test = NeuralNetwork(1, np.array([1]), 2, ["linear"], "MSE", 0.01, W2)
+
+        # params: self, input
+        network_output = network_test.calculate(np.array([[1, 1]]))
+        print(network_test.layers_output)
 
         
     elif (sys.argv[1]=='example'):
