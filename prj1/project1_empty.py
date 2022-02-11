@@ -201,10 +201,41 @@ class NeuralNetwork:
     #Given a predicted output and ground truth output simply return the loss (depending on the loss function)
     def calculateloss(self,yp,y):
         print('calculate')
+        if self.loss == "square error":
+            for i in range(len(y)):
+                loss_calc = (1/len(y)) * np.sum((y[i] - yp[i]) ** 2)
+
+                return loss_calc
+
+        elif self.loss == "binary cross entropy":
+            for i in range(len(y)):
+                loss_calc = np.sum(y[i] * math.log(yp[i]))
+
+                return loss_calc
+
+         else:
+            print("Unrecognized loss function.")
+
+            return loss_calc
     
     #Given a predicted output and ground truth output simply return the derivative of the loss (depending on the loss function)        
-    def lossderiv(self,yp,y):
+    def lossderiv(self, yp, y):
         print('lossderiv')
+
+        if self.loss == "square error":
+            for i in range(len(y)):
+                loss_deriv = (1 / len(y)) * np.sum(2 * (y[i] - yp[i]))
+
+                return loss_deriv
+
+        elif self.loss == "binary cross entropy":
+            for i in range(len(y)):
+                return loss_deriv
+
+        else:
+            print("Unrecognized loss function.")
+
+        return loss_deriv
     
     #Given a single input and desired output preform one step of backpropagation (including a forward pass, getting the derivative of the loss, and then calling calcwdeltas for layers with the right values         
     def train(self,x,y):
@@ -277,7 +308,13 @@ if __name__=="__main__":
 
 
         ### Test Code for NeuralNetwork Class 
-        
+
+        #Test Code for Loss
+        #a = [0, 0, 1, 1]
+        #p = [1, 1, 1, 1]
+        #nn = NeuralNetwork(1, 1, 1, 'linear', 'square error', .5)
+        #loss = nn.lossderiv(a,p)
+        #print(loss)
 
         
 
