@@ -61,7 +61,7 @@ class Neuron:
             act_deriv = self.output * (1 - self.output)
 
         elif self.activation == "linear":
-            act_deriv = 1
+            act_deriv = 1 #wouldn't this be whatever the input is?
 
         else:
             print("Unrecognized activation function.")
@@ -105,7 +105,7 @@ class FullyConnected:
         self.weights = weights if weights is not None else np.random.rand(input_num+1)
         self.neurons = None
         
-    #calculate the output of all the neurons in the layer and return a vector with those values (go through the neurons and call the calcualte() method)      
+    #calculate the output of all the neurons in the layer and return a vector with those values (go through the neurons and call the calcualte() method)
     def calculate(self, input):
         
         neurons =[]
@@ -139,8 +139,15 @@ class FullyConnected:
 #An entire neural network        
 class NeuralNetwork:
     #initialize with the number of layers, number of neurons in each layer (vector), input size, activation (for each layer), the loss function, the learning rate and a 3d matrix of weights weights (or else initialize randomly)
-    def __init__(self,numOfLayers,numOfNeurons, inputSize, activation, loss, lr, weights=None):
-         
+    def __init__(self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None):
+        self.numOfNeurons = numOfLayers
+        self.numOfNeurons = numOfNeurons
+        self.inputSize = inputSize
+        self.activation = activation
+        self.loss = loss
+        self.lr = lr
+        self.weights = weights if weights is not None else np.random.rand(3 + 1) #(input_num + 1)
+
     
     #Given an input, calculate the output (using the layers calculate() method)
     def calculate(self,input):
@@ -149,10 +156,43 @@ class NeuralNetwork:
     #Given a predicted output and ground truth output simply return the loss (depending on the loss function)
     def calculateloss(self,yp,y):
         print('calculate')
+        if self.loss == "square error":
+            for i in range(len(y)):
+                loss_calc = (1/len(y)) * np.sum((y[i] - yp[i]) ** 2)
+
+                return loss_calc
+
+        elif self.loss == "binary cross entropy":
+            for i in range(len(y)):
+                loss_calc = np.sum(y[i] * math.log(yp[i]))
+
+                return loss_calc
+
+        # else:
+        #     print("Unrecognized loss function.")
+
+            return loss_calc
     
     #Given a predicted output and ground truth output simply return the derivative of the loss (depending on the loss function)        
     def lossderiv(self,yp,y):
         print('lossderiv')
+
+        if self.loss == "square error":
+            for i in range(len(y)):
+                loss_deriv = (1 / len(y)) * np.sum(2 * (y[i] - yp[i]))
+
+                return loss_deriv
+
+        elif self.loss == "binary cross entropy":
+            for i in range(len(y)):
+
+                return loss_deriv
+
+        else:
+            print("Unrecognized loss function.")
+
+        return loss_deriv
+
     
     #Given a single input and desired output preform one step of backpropagation (including a forward pass, getting the derivative of the loss, and then calling calcwdeltas for layers with the right values         
     def train(self,x,y):
@@ -201,8 +241,15 @@ if __name__=="__main__":
 
         # Test Code for Fully-Connected Layer Class
         #self,numOfNeurons, activation, input_num, lr, weights=None
-        layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([0.2, 0.3, 0.4, 0.5]))
-        layer_test.calculate([1, 2, 3])
+        # layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([0.2, 0.3, 0.4, 0.5]))
+        # layer_test.calculate([1, 2, 3])
+
+        #Test Code for Loss
+        a = [0, 0, 1, 1]
+        p = [1, 1, 1, 1]
+        nn = NeuralNetwork(1, 1, 1, 'linear', 'square error', .5)
+        loss = nn.lossderiv(a,p)
+        print(loss)
 
 
         
