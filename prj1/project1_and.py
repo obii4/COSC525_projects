@@ -602,7 +602,7 @@ if __name__=="__main__":
 
         # params: numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights
         #network_test = NeuralNetwork(1, np.array([1]), 2, ["linear"], "square error", 1, W2)
-        network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", 0.01)
+        network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", 0.1)
         #network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "binary cross entropy", 5)
 
         x = np.array([[0, 0]])
@@ -638,7 +638,7 @@ if __name__=="__main__":
 
         # Train the network until the loss is essentially zero
         #while losses[-1] > 0.01:
-        while counter < 500:
+        while counter < 1500:
             counter += 1
 
             # vector of predictions for each datapoint in the dataset
@@ -674,22 +674,8 @@ if __name__=="__main__":
         
         losses.pop(0)
 
-        ### Plot the convergence???
-
-        ##figure formatting
-        #fig, axs = plt.subplots(1, 2, figsize=(7, 3), dpi = 150)
-        #fig.text(0.5, -0.02, 'Number of k', ha='center')
-        #fig.text(0, 0.5, 'Overall Accuracy', va='center', rotation='vertical')
-
-        ##axs[0, 0].set_xlim((0, 10))
-        #axs[0].plot(k_synth, synth_accuracies)
-        #axs[0].set_title("Synthetic Dataset")
-
-        #axs[1].plot(k_pima, pima_accuracies)
-        #axs[1].set_title("Pima Dataset")
-
+        ### Plot the convergence
         
-        #colors the plot
         plt.figure(dpi=150)
                 
         #figure formatting
@@ -712,11 +698,65 @@ if __name__=="__main__":
                                 [1],
                                 [1],
                                 [0]])
+        
+
+        #network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", 0.1)
+        network_test = NeuralNetwork(2, np.array([2, 1]), 2, ["logistic", "logistic"], "square error", 0.1)
+
+        
+        ### Train the Neural Network
+
+        losses = [10]
+        counter = 0
+
+        # Train the network until the loss is essentially zero
+        #while losses[-1] > 0.01:
+        while counter < 1500:
+            counter += 1
+
+            # vector of predictions for each datapoint in the dataset
+            yp = np.zeros((len(xor_outputs),1))
+            
+            # train network using whole dataset (1 epoch) and update weights each iteration for the datapoint being used
+            for i in range(len(xor_outputs)):
+
+                # calculate the network output for a datapoint and train the network for that datapoint
+                #print(and_inputs[i])
+                #print(and_outputs[i].shape[1])
 
 
+                network_output = network_test.train(xor_inputs[i], xor_outputs[i])
+
+                # store the prediction for the datapoint
+                yp[i] = network_output
+                #print(f" YP IS {yp}")
 
 
+                #break
+            
+            # Print the predicted output and the loss for each epoch
+            #print()
+            #print(f"y_predictions at epoch {counter} = {yp.T}.")
+            #print(f"newest loss = {network_test.calculateloss(yp, and_outputs):.6f}.")
+            #print()
+            
+            # Append the loss from the epoch to know when to stop the while loop
+            losses.append(network_test.calculateloss(yp, xor_outputs))
+            #break
 
+        
+        losses.pop(0)
 
-        print(xor_outputs.shape)
-        print(xor_inputs.shape)
+        ### Plot the convergence
+
+        plt.figure(dpi=150)
+                
+        #figure formatting
+        #plt.xlim(-1.5, 1.5)
+        #plt.ylim(-0.5, 1.5)
+        plt.title("Synthetic Testing Dataset")
+        plt.xlabel("$x_1$")
+        plt.ylabel("$x_2$")
+
+        plt.plot(range(len(losses)), losses, label = 'Euclidean DB')
+        plt.show()
