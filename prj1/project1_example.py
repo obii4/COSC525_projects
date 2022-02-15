@@ -85,13 +85,13 @@ class Neuron:
         # (partial E / partial w)'s
         partial_derivatives = prev_delta*self.inputs
 
-        #print(f"sum of deltas = {np.sum(wtimesdelta)}")
-        #print(f"wtimesdelta = {wtimesdelta}")
-        #print(f"actderiv = {actderiv}")
-        #print(f"self.inputs = {self.inputs}")
-        #print()
-        #print(f"prev_delta = {prev_delta}")
-        #print(f"partial_derivative = {partial_derivatives}")
+        print(f"sum of deltas = {np.sum(wtimesdelta)}")
+        print(f"wtimesdelta = {wtimesdelta}")
+        print(f"actderiv = {actderiv}")
+        print(f"self.inputs = {self.inputs}")
+        print()
+        print(f"prev_delta = {prev_delta}")
+        print(f"partial_derivative = {partial_derivatives}")
 
 
         # adding just the prev_delta term since bias isn't multiplied by an input
@@ -153,7 +153,7 @@ class FullyConnected:
         
             
     #given the next layer's w*delta, should run through the neurons calling calcpartialderivative() for each (with the correct value), sum up its ownw*delta, and then update the wieghts (using the updateweight() method). I should return the sum of w*delta.          
-    def calcwdeltas(self, wtimesdelta):
+    def calcwdeltas(self, wtimesdelta, last=None):
         #wtimesdelta is a 2D matrix coming from the previous layer
         
 
@@ -170,16 +170,24 @@ class FullyConnected:
 
             #y.shape[0], y.shape[1]
             #if len(wtimesdelta) == 1:
-            print(wtimesdelta.shape[0])
+            print(f"Wtimes Delta IMportant Shape = {wtimesdelta.shape[0]}")
+            print(f"Wtimes Delta IMportant Shape 2 = {wtimesdelta.shape[1]}")
             print(wtimesdelta.shape[1])
-            if wtimesdelta.shape[0] == 1:
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
+            #if wtimesdelta.shape[0] == 1:
+            if last == "yes":
+                #prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
+                print(f"Failure here: full 1st iter {wtimesdelta}")
+                print(f"Failure here: ith 1st iter{wtimesdelta}")
+                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
                 #print(f"W times Delta 1st => {wtimesdelta[:, i]}")
             else:
                 #print(f"W times Delta 2nd => {wtimesdelta[:, i]}")
                 #print()
                 #print()
                 # Calculates the w*delta vector for the ith neuron
+                #prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
+                print(f"Failure here: full 2nd iter {wtimesdelta}")
+                print(f"Failure here: ith 2nd iter {wtimesdelta[:, i]}")
                 prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
 
             #print(self.neurons[i].weights)
@@ -318,7 +326,8 @@ class NeuralNetwork:
                 #loss_derivs.append((2/len(yp)*(yp[i] - y[i]))) #loss_deri = (1 / len(y)) * np.sum(2 * (y[i] - yp[i]))
                 #print(f"yp[i] = {yp[i]}")
                 #print(f"y[i] = {y[i]}")
-                loss_derivs[i] = ((2/len(yp))*(yp[i] - y[i]))
+                #loss_derivs[i] = ((2/len(yp))*(yp[i] - y[i]))
+                loss_derivs[i] = (yp[i] - y[i])
 
         elif self.loss == "binary cross entropy":
 
@@ -355,8 +364,9 @@ class NeuralNetwork:
                 # Get wdeltas differently for the last layer
                 #print(f"i = {i}")
 
-                #print("Last layer calc")
-                next_wdeltas.append(self.layers[i].calcwdeltas(loss_deriv))
+                print("Last layer calc")
+                print(f"loss_deriv = {loss_deriv}")
+                next_wdeltas.append(self.layers[i].calcwdeltas(loss_deriv, "yes"))
                 #next_wdeltas.append(self.layers[i].calcwdeltas(np.array([[0.74136507, -0.217071535]])))
                 
                 #print(f" loss_deriv passed as a delta = {loss_deriv}")
@@ -366,18 +376,16 @@ class NeuralNetwork:
 
             else:
                 # iterate through the rest of the layers normally
-                #next_wdeltas.append(self.layers[i].calcwdeltas(next_wdeltas[i-1]))
-                #print(i)
 
-                #print("other layers calc")
+                print("other layers calc")
 
                 next_wdeltas.append(self.layers[i].calcwdeltas(next_wdeltas[len(self.layers) - (i + 2)]))
 
                 #print(self.layers[i].calcwdeltas(next_wdeltas[i]))
                 #print(f"wdeltas passed to neurons: {next_wdeltas[len(self.layers) - (i + 2)]}")
 
-        #return np.reshape(yp, (len(yp), 1))
-        return np.reshape(yp, (1, len(yp)))
+        return np.reshape(yp, (len(yp), 1))
+        #return np.reshape(yp, (1, len(yp)))
 
 
 if __name__=="__main__":
@@ -590,6 +598,22 @@ if __name__=="__main__":
         network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", 5)
         #network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "binary cross entropy", 5)
 
+        # Testing Feedforward
+        x1 = np.array([[0, 0]])
+        x2 = np.array([[0, 0]])
+        x3 = np.array([[0, 0]])
+        x4 = np.array([[0, 0]])
+        
+        network_output = network_test.calculate(x1)
+        print(f"netowrk output {network_output}")
+        network_output = network_test.calculate(x2)
+        print(f"netowrk output {network_output}")        
+        network_output = network_test.calculate(x3)
+        print(f"netowrk output {network_output}")        
+        network_output = network_test.calculate(x4)
+        print(f"netowrk output {network_output}")
+
+
 
         ### Train the Neural Network
 
@@ -599,7 +623,7 @@ if __name__=="__main__":
         # Train the network until the loss is essentially zero
         while losses[-1] > 0.001:
             counter += 1
-
+            
             # vector of predictions for each datapoint in the dataset
             yp = np.zeros((len(and_outputs),1))
             
@@ -623,7 +647,7 @@ if __name__=="__main__":
 
             # Append the loss from the epoch to know when to stop the while loop
             losses.append(network_test.calculateloss(yp, and_outputs))
-            
+            break
 
         ### Plot the convergence???
 
