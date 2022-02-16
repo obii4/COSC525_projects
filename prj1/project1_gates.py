@@ -16,7 +16,8 @@ loss:
 
 # A class which represents a single neuron
 class Neuron:
-    #initilize neuron with activation type, number of inputs, learning rate, and possibly with set weights
+
+    #initialize neuron with activation type, number of inputs, learning rate, and possibly with set weights
     def __init__(self,activation, input_num, lr, weights=None):
         self.activation = activation
         self.input_num = input_num
@@ -86,15 +87,6 @@ class Neuron:
         # (partial E / partial w)'s
         partial_derivatives = prev_delta*self.inputs
 
-        #print(f"sum of deltas = {np.sum(wtimesdelta)}")
-        #print(f"wtimesdelta = {wtimesdelta}")
-        #print(f"actderiv = {actderiv}")
-        #print(f"self.inputs = {self.inputs}")
-        #print()
-        #print(f"prev_delta = {prev_delta}")
-        #print(f"partial_derivative = {partial_derivatives}")
-
-
         # adding just the prev_delta term since bias isn't multiplied by an input
         self.partialderivatives = np.append(partial_derivatives, prev_delta)
         
@@ -110,17 +102,15 @@ class Neuron:
     #Simply update the weights using the partial derivatives and the learning weight
     def updateweight(self):
 
-        #print(f"self.weights before update = {self.weights}")
-
         # Weight update calculation (weights and bias) (eqn 4 on summary page)
         self.weights = self.weights - self.lr * self.partialderivatives
 
-        #print(f"self.weights after update = {self.weights}")
-
         return self.weights
 
-        
-#A fully connected layer        
+
+
+
+### Class of a single fully connected layer      
 class FullyConnected:
     #initialize with the number of neurons in the layer, their activation,the input size, the leraning rate and a 2d matrix of weights (or else initialize randomly)
     def __init__(self,numOfNeurons, activation, input_num, lr, weights=None):
@@ -163,35 +153,19 @@ class FullyConnected:
 
         # Iterates through neurons top to bottom and calculates the wtimesdelta vector for each one
         for i in range(self.numOfNeurons):
-
-            #print()
-            #print()
-            #print(f"Overall W Times Delta{wtimesdelta}")
-            #print(f" length of wtimesdelta => {len(wtimesdelta)}")
-
-            #y.shape[0], y.shape[1]
-            #if len(wtimesdelta) == 1:
-            #print(wtimesdelta.shape[0])
-            #print(wtimesdelta.shape[1])
-
             
             if wtimesdelta.shape[0] == 1:
+
+                # Calculates the w*delta vector when the w*delta in use is from a single neuron
                 prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta)
-                #print(f"W times Delta 1st => {wtimesdelta[:, i]}")
+
             else:
-                #print(f"W times Delta 2nd => {wtimesdelta[:, i]}")
-                #print()
-                #print()
+
                 # Calculates the w*delta vector for the ith neuron
                 prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
 
-            #print(self.neurons[i].weights)
-
-            #update the ith neuron
-            #print(self.weights)
+            # Update the ith neuron
             self.neurons[i].updateweight()
-
-            #print(self.neurons[i].weights)
 
         return prev_wtimes_delta
 
@@ -225,8 +199,6 @@ class NeuralNetwork:
                     temp = np.random.rand(numOfNeurons[i], numOfNeurons[i-1]+1)
                     weights.append(temp)
 
-            #Which is better to use??
-            #self.weights = np.array(weights, dtype=object)
             self.weights = weights
     
 
@@ -235,7 +207,7 @@ class NeuralNetwork:
          for i in range(self.numOfLayers):
 
              if i == 0:
-                 # First layer uses the input given by the user
+                 # First layer uses the inputs given by the user
                  _layer_i = FullyConnected(self.numOfNeurons[i], self.activation[i], self.inputSize, self.lr, self.weights[i])
             
              else:
@@ -271,44 +243,29 @@ class NeuralNetwork:
     def calculateloss(self,yp,y):
 
         loss_calcs = np.zeros((y.shape[0], y.shape[1]))
-        #print(loss_calcs)
-        #print(f"len of y = {len(y)}")
+
         if self.loss == "square error":
 
             for i in range(len(y)):
-                #print(yp[i])
-                #print(y[i])
                 loss_calcs[i] = (1/len(y)) * np.square(np.subtract(y[i], yp[i]))
-                #loss_calcs = (1/len(y)) * np.sum((y[i] - yp[i]) ** 2)
-
-            #print(f"loss_calcs = {loss_calcs}")
 
 
         elif self.loss == "binary cross entropy":
+
             for i in range(len(y)):
                 loss_calcs[i] = (1 / len(yp)) * -((y[i] * math.log(yp[i])) + (1 - y[i]) * math.log(1 - yp[i]))
 
         else:
-            print("Unrecognized loss function.")
-
-            return loss_calc_sum
+            print("Unrecognized loss function")
     
-        #print(f"loss_calcs = {loss_calcs}")
+        # Sum the losses from each output
         loss_calc_sum = np.sum(loss_calcs)
         return loss_calc_sum
+
     #Given a predicted output and ground truth output simply return the derivative of the loss (depending on the loss function)        
     def lossderiv(self, yp, y):
-
-        #print(f"yp = {yp}")
-        #print(f"y = {y}")
-
-
-        #loss_derivs = []
-
-        #print(f"NEW SHAPE {y.shape}")
         
-        
-        
+        # Creates loss_derivs specific for the example which only has 1 datapoint
         if sys.argv[1]=='example':
             loss_derivs = np.zeros((y.shape[0], y.shape[1]))
         else:
@@ -317,15 +274,10 @@ class NeuralNetwork:
         
         if self.loss == "square error":
             
-            print(len(yp))
             for i in range(len(y)):
-                #loss_derivs.append((2/len(yp)*(yp[i] - y[i]))) #loss_deri = (1 / len(y)) * np.sum(2 * (y[i] - yp[i]))
-                #print(f"yp[i] = {yp[i]}")
-                #print(f"y[i] = {y[i]}")
-                #loss_derivs[i] = ((2/len(yp))*(yp[i] - y[i]))
                 
-                loss_derivs[i] = -(y[i] - yp[i])
-                #print(f"loss derivs!!!! = {loss_derivs}")
+                loss_derivs[i] = yp[i] - y[i]
+
         elif self.loss == "binary cross entropy":
 
             for i in range(len(y)):
@@ -333,12 +285,7 @@ class NeuralNetwork:
 
         else:
             print("Unrecognized loss function.")
-
-        #return np.array(loss_derivs)
-
-        #print(f"loss_derivs = {loss_derivs}")
-        
-        
+ 
         
         return loss_derivs
     
@@ -579,67 +526,39 @@ if __name__=="__main__":
 
 
     elif(sys.argv[1]=='and'):
-        print("Output of the single perceptron using AND gate data")
+        
+        num_epochs = 1000
+
+        print(f"Training AND gate for {num_epochs} epochs.")
+
+        
         and_inputs = np.array([[0, 0],
                                [0, 1],
                                [1, 0],
                                [1, 1]])
 
-        #and_outputs = np.array([[[0]],
-        #                        [[0]],
-        #                        [[0]],
-        #                        [[1]]])
         and_outputs = np.array([[0],
                                 [0],
                                 [0],
                                 [1]])
 
+
         ### Initiate the Neural Network
 
-        W2 = np.array([np.array([[1, 1, 5]])])
-        #x = np.array([4, 4])
-        #y = np.array([[10]])
 
-        # params: numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights
-        #network_test = NeuralNetwork(1, np.array([1]), 2, ["linear"], "square error", 1, W2)
-        network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", 0.1)
-        #network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "binary cross entropy", 5)
+        #test_weights = np.array([np.array([[1, 1, 5]])])
 
-        x = np.array([[0, 0]])
-        network_output = network_test.calculate(x)
-        #print(f"network output{network_output}")
-
-
-
-
-        ### Check Feedforward:
-        x1 = np.array([[0, 0]])
-        x2 = np.array([[0, 1]])
-        x3 = np.array([[1, 0]])
-        x4 = np.array([[1, 1]])
-        
-        network_output = network_test.calculate(x1)
-        print(f"netowrk output {network_output}")
-        network_output = network_test.calculate(x2)
-        print(f"netowrk output {network_output}")        
-        network_output = network_test.calculate(x3)
-        print(f"netowrk output {network_output}")        
-        network_output = network_test.calculate(x4)
-        print(f"netowrk output {network_output}")
-
-
-
+        # params: numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
+        SLP_network = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", float(sys.argv[2]))
 
 
         ### Train the Neural Network
 
-        losses = [10]
-        counter = 0
 
-        # Train the network until the loss is essentially zero
-        #while losses[-1] > 0.01:
-        while counter < 1500:
-            counter += 1
+        losses = []
+
+
+        for i in range(num_epochs):
 
             # vector of predictions for each datapoint in the dataset
             yp = np.zeros((len(and_outputs),1))
@@ -647,49 +566,38 @@ if __name__=="__main__":
             # train network using whole dataset (1 epoch) and update weights each iteration for the datapoint being used
             for i in range(len(and_outputs)):
 
-                # calculate the network output for a datapoint and train the network for that datapoint
-                #print(and_inputs[i])
-                #print(and_outputs[i].shape[1])
-
-
-                network_output = network_test.train(and_inputs[i], and_outputs[i])
+                network_output = SLP_network.train(and_inputs[i], and_outputs[i])
 
                 # store the prediction for the datapoint
                 yp[i] = network_output
-                #print(f" YP IS {yp}")
-
-
-                #break
             
-            # Print the predicted output and the loss for each epoch
-            #print()
-            #print(f"y_predictions at epoch {counter} = {yp.T}.")
-            #print(f"newest loss = {network_test.calculateloss(yp, and_outputs):.6f}.")
-            #print()
-            
-            # Append the loss from the epoch to know when to stop the while loop
-            losses.append(network_test.calculateloss(yp, and_outputs))
-            #break
+            # Append the loss from the epoch
+            losses.append(SLP_network.calculateloss(yp, and_outputs))
 
-        
-        losses.pop(0)
 
         ### Plot the convergence
-        
-        plt.figure(dpi=150)
-                
-        #figure formatting
-        #plt.xlim(-1.5, 1.5)
-        #plt.ylim(-0.5, 1.5)
-        plt.title("Synthetic Testing Dataset")
-        plt.xlabel("$x_1$")
-        plt.ylabel("$x_2$")
 
-        plt.plot(range(len(losses)), losses, label = 'Euclidean DB')
+
+        plt.figure(dpi=150)
+        plt.plot(range(len(losses)), losses)
+
+        #figure formatting
+        plt.title("Convergence Curves: AND Gate")
+        plt.xlabel("Epochs")
+        plt.ylabel("Error")
+        
         plt.show()
 
+
+
+
     elif(sys.argv[1]=='xor'):
-        print('learn xor')
+
+
+        num_epochs = 10000
+
+        print(f"Training XOR gate for {num_epochs} epochs.")
+
         xor_inputs = np.array([[0, 0],
                                [0, 1],
                                [1, 0],
@@ -700,63 +608,66 @@ if __name__=="__main__":
                                 [0]])
         
 
-        #network_test = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", 0.1)
-        network_test = NeuralNetwork(2, np.array([2, 1]), 2, ["logistic", "logistic"], "square error", 0.1)
+        ### Initialize the Network
+
+
+
+        # 5 x 1 network -> converges
+        converging_network = NeuralNetwork(2, np.array([5, 1]), 2, ["logistic", "logistic"], "square error", float(sys.argv[2]))
+        
+
+        # Single Perceptron -> does NOT converge
+        SLP_network = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", float(sys.argv[2]))
+
 
         
         ### Train the Neural Network
 
-        losses = [10]
-        counter = 0
+        # Lists for storing the losses at end of each epoch for plotting
+        losses_conv= []
+        losses_nconv = []
 
-        # Train the network until the loss is essentially zero
-        #while losses[-1] > 0.01:
-        while counter < 1500:
-            counter += 1
+        for i in range(num_epochs):
 
             # vector of predictions for each datapoint in the dataset
-            yp = np.zeros((len(xor_outputs),1))
+            yp_conv = np.zeros((len(xor_outputs),1))
             
+            yp_nconv = np.zeros((len(xor_outputs),1))
             # train network using whole dataset (1 epoch) and update weights each iteration for the datapoint being used
             for i in range(len(xor_outputs)):
 
-                # calculate the network output for a datapoint and train the network for that datapoint
-                #print(and_inputs[i])
-                #print(and_outputs[i].shape[1])
+                # Train both networks
+                converging_network_output = converging_network.train(xor_inputs[i], xor_outputs[i])
+                SLP_network_output = SLP_network.train(xor_inputs[i], xor_outputs[i])
 
-
-                network_output = network_test.train(xor_inputs[i], xor_outputs[i])
-
-                # store the prediction for the datapoint
-                yp[i] = network_output
-                #print(f" YP IS {yp}")
-
-
-                #break
+                # store the prediction for the datapoint for each network
+                yp_conv[i] = converging_network_output
+                yp_nconv[i] = SLP_network_output
             
-            # Print the predicted output and the loss for each epoch
-            #print()
-            #print(f"y_predictions at epoch {counter} = {yp.T}.")
-            #print(f"newest loss = {network_test.calculateloss(yp, and_outputs):.6f}.")
-            #print()
-            
+                
+
             # Append the loss from the epoch to know when to stop the while loop
-            losses.append(network_test.calculateloss(yp, xor_outputs))
-            #break
+            losses_conv.append(converging_network.calculateloss(yp_conv, xor_outputs))
+            losses_nconv.append(SLP_network.calculateloss(yp_nconv, xor_outputs))
 
         
-        losses.pop(0)
+        print(f"Converging network final predictions {yp_conv[:, -1]}")
+        print(f"Not Converging SLP final predictions {yp_nconv[:, -1]}")
+        print("Expected Output: [0, 1, 1, 0]")
+
 
         ### Plot the convergence
 
-        plt.figure(dpi=150)
-                
-        #figure formatting
-        #plt.xlim(-1.5, 1.5)
-        #plt.ylim(-0.5, 1.5)
-        plt.title("Synthetic Testing Dataset")
-        plt.xlabel("$x_1$")
-        plt.ylabel("$x_2$")
 
-        plt.plot(range(len(losses)), losses, label = 'Euclidean DB')
+        plt.figure(dpi=150)
+        plt.plot(range(len(losses_conv)), losses_conv)
+        plt.plot(range(len(losses_nconv)), losses_nconv)
+
+
+        #figure formatting
+        plt.title("Convergence Curves: XOR Gate")
+        plt.xlabel("Epochs")
+        plt.ylabel("Error")
+        plt.legend(["Converging Network [5 x 1]", "Not Converging SLP"])
+        
         plt.show()
