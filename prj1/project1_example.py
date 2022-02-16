@@ -81,40 +81,24 @@ class Neuron:
         prev_delta = np.sum(wtimesdelta)*actderiv
         
 
-
         # (partial E / partial w)'s
         partial_derivatives = prev_delta*self.inputs
-
-        print(f"sum of deltas = {np.sum(wtimesdelta)}")
-        print(f"wtimesdelta = {wtimesdelta}")
-        print(f"actderiv = {actderiv}")
-        print(f"self.inputs = {self.inputs}")
-        print()
-        print(f"prev_delta = {prev_delta}")
-        print(f"partial_derivative = {partial_derivatives}")
 
 
         # adding just the prev_delta term since bias isn't multiplied by an input
         self.partialderivatives = np.append(partial_derivatives, prev_delta)
         
         # w * delta vector to be used in the previous layer (wtimesdelta passed back from this neuron)
-        # There will be a set of wtimes delta for each neuron in the layer of this neuron which will form a 2D matrix in the
-        # FullyCOnnected class whose transpose will be used in the subsequent layer's backprop
-        # this problem could also be fixed if we just appended a 1 to the end of our input vector
         prev_wtimesdelta = prev_delta*self.weights
         prev_wtimesdelta[-1] = prev_delta
-        #print(f"prev_wtimesdelta {prev_wtimesdelta}")
+
         return prev_wtimesdelta
     
     #Simply update the weights using the partial derivatives and the learning weight
     def updateweight(self):
 
-        #print(f"self.weights before update = {self.weights}")
-
         # Weight update calculation (weights and bias) (eqn 4 on summary page)
         self.weights = self.weights - self.lr * self.partialderivatives
-
-        #print(f"self.weights after update = {self.weights}")
 
         return self.weights
 
@@ -163,39 +147,16 @@ class FullyConnected:
         # Iterates through neurons top to bottom and calculates the wtimesdelta vector for each one
         for i in range(self.numOfNeurons):
 
-            #print()
-            #print()
-            #print(f"Overall W Times Delta{wtimesdelta}")
-            #print(f" length of wtimesdelta => {len(wtimesdelta)}")
-
-            #y.shape[0], y.shape[1]
-            #if len(wtimesdelta) == 1:
-            print(f"Wtimes Delta IMportant Shape = {wtimesdelta.shape[0]}")
-            print(f"Wtimes Delta IMportant Shape 2 = {wtimesdelta.shape[1]}")
-            print(wtimesdelta.shape[1])
-            #if wtimesdelta.shape[0] == 1:
             if last == "yes":
-                #prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
-                print(f"Failure here: full 1st iter {wtimesdelta}")
-                print(f"Failure here: ith 1st iter{wtimesdelta}")
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
-                #print(f"W times Delta 1st => {wtimesdelta[:, i]}")
-            else:
-                #print(f"W times Delta 2nd => {wtimesdelta[:, i]}")
-                #print()
-                #print()
-                # Calculates the w*delta vector for the ith neuron
-                #prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
-                print(f"Failure here: full 2nd iter {wtimesdelta}")
-                print(f"Failure here: ith 2nd iter {wtimesdelta[:, i]}")
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
 
-            #print(self.neurons[i].weights)
+                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
+
+            else:
+
+                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
 
             #update the ith neuron
             self.neurons[i].updateweight()
-
-            #print(self.neurons[i].weights)
 
         return prev_wtimes_delta
 
@@ -275,17 +236,11 @@ class NeuralNetwork:
     def calculateloss(self,yp,y):
 
         loss_calcs = np.zeros((y.shape[0], y.shape[1]))
-        #print(loss_calcs)
-        #print(f"len of y = {len(y)}")
         if self.loss == "square error":
 
             for i in range(len(y)):
-                print(yp[i])
-                print(y[i])
                 loss_calcs[i] = 0.5 * np.square(np.subtract(y[i], yp[i]))
-                #loss_calcs = (1/len(y)) * np.sum((y[i] - yp[i]) ** 2)
 
-            #print(f"loss_calcs = {loss_calcs}")
 
 
         elif self.loss == "binary cross entropy":
@@ -297,23 +252,13 @@ class NeuralNetwork:
 
             return loss_calc_sum
     
-        #print(f"loss_calcs = {loss_calcs}")
         loss_calc_sum = np.sum(loss_calcs)
+
         return loss_calc_sum
     #Given a predicted output and ground truth output simply return the derivative of the loss (depending on the loss function)        
     def lossderiv(self, yp, y):
-
-        #print(f"yp = {yp}")
-        #print(f"y = {y}")
-
-
-        #loss_derivs = []
-
-        #print(f"NEW SHAPE {y.shape}")
         
-        
-        
-        if sys.argv[1]=='example':
+        if sys.argv[2]=='example':
             loss_derivs = np.zeros((y.shape[0], y.shape[1]))
         else:
             loss_derivs = np.zeros(len(y))
@@ -321,12 +266,8 @@ class NeuralNetwork:
         
         if self.loss == "square error":
             
-            print(len(yp))
             for i in range(len(y)):
-                #loss_derivs.append((2/len(yp)*(yp[i] - y[i]))) #loss_deri = (1 / len(y)) * np.sum(2 * (y[i] - yp[i]))
-                #print(f"yp[i] = {yp[i]}")
-                #print(f"y[i] = {y[i]}")
-                #loss_derivs[i] = ((2/len(yp))*(yp[i] - y[i]))
+
                 loss_derivs[i] = (yp[i] - y[i])
 
         elif self.loss == "binary cross entropy":
@@ -337,232 +278,46 @@ class NeuralNetwork:
         else:
             print("Unrecognized loss function.")
 
-        #return np.array(loss_derivs)
-
-        #print(f"loss_derivs = {loss_derivs}")
         return loss_derivs
     
     #Given a single input and desired output preform one step of backpropagation (including a forward pass, getting the derivative of the loss, and then calling calcwdeltas for layers with the right values         
     def train(self,x,y):
 
         yp = self.calculate(x)
-        
-        # print output test
-        #print(yp.shape)
 
         loss_deriv = self.lossderiv(yp, y)
-        #print(loss_deriv)
+
         next_wdeltas = []
 
-        count = 0
-        #for i in range(len(self.layers)):
         for i, e in reversed(list(enumerate(self.layers))):
-            print(count)
-            count +=1
-            #print(f"i = {i}")
+
             if i == len(self.layers) - 1:
                 # Get wdeltas differently for the last layer
-                #print(f"i = {i}")
-
-                print("Last layer calc")
-                print(f"loss_deriv = {loss_deriv}")
                 next_wdeltas.append(self.layers[i].calcwdeltas(loss_deriv, "yes"))
-                #next_wdeltas.append(self.layers[i].calcwdeltas(np.array([[0.74136507, -0.217071535]])))
-                
-                #print(f" loss_deriv passed as a delta = {loss_deriv}")
 
-
-                #print(self.layers[i].calcwdeltas(loss_deriv))
 
             else:
                 # iterate through the rest of the layers normally
-
-                print("other layers calc")
-
                 next_wdeltas.append(self.layers[i].calcwdeltas(next_wdeltas[len(self.layers) - (i + 2)]))
 
-                #print(self.layers[i].calcwdeltas(next_wdeltas[i]))
-                #print(f"wdeltas passed to neurons: {next_wdeltas[len(self.layers) - (i + 2)]}")
-
         return np.reshape(yp, (len(yp), 1))
-        #return np.reshape(yp, (1, len(yp)))
+
 
 
 if __name__=="__main__":
     if (len(sys.argv)<2):
-
-
-
-
-        # Test Code for Neuron Class
-
-
-
-
-
-        #print("Test Code for Neuron Class")
-        neuron_test = Neuron("logistic", 3, 0.01, np.array([0.2, 0.3, 0.4, 0.5]))
-        ##neuron_test = Neuron("logistic", 3, 0.01)
-        #print(neuron_test.lr)
-        #print(neuron_test.input_num)
-        #print(neuron_test.activation)
-        #print(neuron_test.weights)
-
-        ## Testing the "activate" method
-
-        #print("Testing of activate")
-        act_func_val = neuron_test.activate(5)
-        #print(act_func_val)
-
-        ## Testing the "calculate" method
-
-        #print("Testing of calculate")
-        calc_vect = neuron_test.calculate(np.array([1, 2, 3]))
-        #print(calc_vect)
-        #print(neuron_test.inputs)
-        #print(neuron_test.output)
-
-        ## Testing the "activationderivative" method
-
-        #print("Testing of activationderivative")
-        actderiv_val = neuron_test.activationderivative()
-        #print(actderiv_val)
-
-        ## Testing "calcpartialderivative" method
-
-        #print("Testing calcpartialderivative")
-        prev_deltas = neuron_test.calcpartialderivative(np.array([1, 1]))
-        #print(prev_deltas)
-
-        ## Testing of "updateweights" method
-
-        #print("Testing of updateweights")
-        #updated_weights = neuron_test.updateweight()
-        #print(updated_weights)
-
-
-
-
-
-        ### Test Code for Fully-Connected Layer Class
-
-
-
-
-
-        #self,numOfNeurons, activation, input_num, lr, weights=None
-        ##print("Testing the FullyConnected Layer Class")
-
-        #layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([np.array([0.2, 0.3, 0.4, 0.5]), np.array([0.2, 0.3, 0.4, 0.5])])) # in case we have to make numpy arrays of all lists :/
-        #layer_test = FullyConnected(2, "logistic", 3, 0.01, np.array([[0.2, 0.3, 0.4, 0.5], [0.2, 0.3, 0.4, 0.5]]))
-        #layer_test.calculate([[1, 2, 3], [1, 2, 3]])
-        #f = layer_test.calculate(np.array([1, 2, 3]))
-        #print(layer_test.neurons.lr)
-
-        #g = layer_test.calcwdeltas(np.array([np.array([1, 1, 1, 1]), np.array([1, 1, 1, 1])])) # in case we have to make numpy arrays of all lists :/
-        #g = layer_test.calcwdeltas(np.array([[3, 3], [3, 3]]))
-        #print(g)
-
-
-
-
-
-        ### Test Code for NeuralNetwork Class 
-
-
-
-
-
-        #(self,numOfLayers,numOfNeurons, inputSize, activation, loss, lr, weights=None
-        #Test Code for Loss
-        a = [0, 0, 1, 1]
-        p = [1, 1, 1, 1]
-        nn = NeuralNetwork(1, [1], 1, 'linear', 'square error', .5)
-        loss = nn.lossderiv(a,p)
-        #print(loss)
-
+        pass
         
-
-        ## This setup DOES work
-        W = np.array([np.array([[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]),
-                      np.array([[0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2]]),
-                      np.array([[0.1, 0.1, 0.1, 0.1, 0.1],[0.1, 0.1, 0.1, 0.1, 0.1]])], dtype=object)
-
-        ### This setup does NOT work
-        ##W = np.array([[[0.5, 0.5, 0.5], [0.5, 0.5, 0.5]],
-        #              #[[0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2], [0.2, 0.2, 0.2]],
-        #              #[[0.1, 0.1, 0.1, 0.1, 0.1],[0.1, 0.1, 0.1, 0.1, 0.1]]])
-        
-        ### 2 x 4 x 2 network size
-
-        ## params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        #network_test = NeuralNetwork(3, np.array([2, 4, 2]), 2, ["logistic", "logistic", "linear"], "MSE", 0.01, W)
-
-        ## params: self, input
-        #network_output = network_test.calculate(np.array([[1, 2]]))
-        #print(network_test.layers_output)
-
-        ## 3 x 1 network size
-
-        #W3 = np.array([np.array([[4, 4, 4], [6, 6, 6], [7, 7, 7]]),
-        #              np.array([[2, 2, 2, 2]])], dtype=object)
-
-        ## params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        #network_test = NeuralNetwork(2, np.array([3, 1]), 2, ["linear", "linear"], "square error", 0.01, W3)
-
-        ## params: self, input
-        #network_output = network_test.calculate(np.array([[3, 5]]))
-        ##print(network_test.layers_output)
-
-        #x = np.array([20, 40])
-        #y = np.array([[0.4]])
-
-        #network_train = network_test.train(x, y)
-
-
-
-        ### single perceptron test
-
-        W2 = np.array([np.array([[1, 1, 5]])])
-        x = np.array([4, 4])
-        y = np.array([[10]])
-
-
-        # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        network_test = NeuralNetwork(1, np.array([1]), 2, ["linear"], "square error", 0.01, W2)
-
-        # params: self, input
-        #network_output = network_test.calculate(x)
-        #print(network_output)
-
-        network_train = network_test.train(x, y)
-        
-    elif (sys.argv[1]=='example'):
-        print('run example from class (single step)')
+    elif (sys.argv[2]=='example'):
+        print('Run example from class (single step)')
         w=np.array([[[.15,.2,.35],[.25,.3,.35]],[[.4,.45,.6],[.5,.55,.6]]])
         x=np.array([[0.05, 0.1]])
         y=np.array([[0.01], [0.99]])
 
         # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", 0.5, w)
+        example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]), w)
 
         network_output = example_network.train(x, y)
-
-        # outputs of feedforward
-        print(network_output)
-
-        print(example_network.calculateloss(network_output, y))
-
-        #layer_1 = example_network.layers[0]
-
-        #neuron_1 = layer_1.neurons[1]
-        
-        #print(neuron_1.weights)
-
-
-
-
-        # Printing the weights of the network
 
         # weights going Layers left to right & Neurons top to bottom
         for i, lays in enumerate(example_network.layers):
@@ -662,11 +417,6 @@ if __name__=="__main__":
                                 [1],
                                 [1],
                                 [0]])
-
-
-
-
-
 
         print(xor_outputs.shape)
         print(xor_inputs.shape)
