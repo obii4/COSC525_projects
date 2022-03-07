@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4d2c633d-a6a8-4639-a3d0-355ed387af86" name="Changes" comment="" />
+    <list default="true" id="4d2c633d-a6a8-4639-a3d0-355ed387af86" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prj2/parameters.py" beforeDir="false" afterPath="$PROJECT_DIR$/prj2/parameters.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prj2/tensorflowtest_example2.py" beforeDir="false" afterPath="$PROJECT_DIR$/prj2/tensorflowtest_example2.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
