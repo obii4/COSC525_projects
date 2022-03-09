@@ -183,24 +183,23 @@ class ConvolutionalLayer:
         self.numKernels = numKernels # same as number of filters
         self.kernelSize = kernelSize # will be an int since we assume it to be square
         self.activation = activation 
-        self.inputDim = inputDim # np.array([m, n, p]) (doesn't have to be square), m = height of input, n = width of input, p = num input channels
+        self.inputDim = inputDim # np.array([m, n, p]) (doesn't have to be square), m = num input channels, n = height of input, p = width of input, 
         self.lr = lr
-        self.weights = weights if weights is not None else np.random.rand(kernelSize, kernelSize, inputDim[2], numKernels)
+        self.weights = weights if weights is not None else np.random.rand(kernelSize, kernelSize, inputDim[0], numKernels)
         #print(f"self.weights print out: {self.weights}")
         #print(f"self.weights SHAPE print out: {self.weights.shape}")
         # unlike FCL, biases is its own attribute for a CL
         self.biases = np.random.rand(numKernels) # one for each kernel
     
-        # Create array of neurons in the layer
-        
-        #self.neurons = []
         # needed for reshaping neuron weights and is the same as the neuron input dim (which may or may not be needed to be included)
-        numweights_per_neuron = kernelSize * kernelSize * inputDim[2]
+        numweights_per_neuron = kernelSize * kernelSize * inputDim[0]
         
         #Create Neuron objects for entire Layer Shape will be:
         
-        # Shape of the output & of the neurons
-        self.output_shape = np.array([inputDim[0] - kernelSize + 1, inputDim[1] - kernelSize + 1, numKernels])
+        # Shape of the output & of the neurons. m x n x p: m = number of output channels (same as num of kernels); 
+        #n = output #rows is ((h_i + (padding term here) - h_f) / s) + 1 (where i stands for input and f for filter); 
+        #p = output #columns is ((w_i + (padding term here) - w_f) / s) + 1
+        self.output_shape = np.array([numKernels, inputDim[1] - kernelSize + 1, inputDim[2] - kernelSize + 1])
         
         # Initialize neuron tensor about to be filled
         self.neurons = np.zeros((self.output_shape[0], self.output_shape[1], self.output_shape[2]), dtype=object)
@@ -209,72 +208,78 @@ class ConvolutionalLayer:
         self.output = np.zeros((self.output_shape[0], self.output_shape[1], self.output_shape[2]))
         
         # Create Neurons for an output channel at a time
-        for i in range(numKernels):
+        for i in range(self.output_shape[0]):
             # Create Neurons for a row of an output channel (feature map) (would need to change dimension here if padding = 'same' or stride was not equal to 1)
-            # Equation for output #rows is ((h_i + (padding term here) - h_f) / s) + 1 (where i stands for input and f for filter)
-            for j in range(inputDim[0] - kernelSize + 1):
+            for j in range(self.output_shape[1]):
                 # Create Neurons for column of an output channel (feature map) (would need to change dimension here if padding = 'same' or stride was not equal to 1)
-                # Equation for output #columns is ((w_i + (padding term here) - w_f) / s) + 1
-                for k in range(inputDim[1] - kernelSize + 1):
+                for k in range(self.output_shape[2]):
                     
                     # neurons require 1D vector of weights, so they are reshaped from 4D (really 3D) to 1D
                     _neuron_weights = np.reshape(self.weights[:, :, :, i], numweights_per_neuron)
                     
                     # add bias to the end of the neuron weights
                     _neuron_weights = np.append(_neuron_weights, self.biases[i])
-                    print(_neuron_weights)
+                    #print(_neuron_weights)
                     
                     # create a neuron with specified weights
-                    _neuron_i = Neuron(self.activation, numweights_per_neuron, self.lr, _neuron_weights)
+                    self.neurons[i, j, k] = Neuron(self.activation, numweights_per_neuron, self.lr, _neuron_weights)
                     
-                    self.neurons[j, k, i] = _neuron_i
                     
         print(self.neurons.shape)
     def calculate(self, input_):
         # All inputs will be assumed to be 2D numpy arrays
         
-        # reshape the input from 2D to 1D so it can be used as Neuron input
-        #input_ = np.reshape(input_, input_.shape[0]*input_.shape[1])
-        
         ### Calculate Each Neuron's output and store it in the output attribute
         
-        count_row = 0
-        count_col = 0
-        
-        
         # Each Output Channel
-        for i in range(self.output_shape[2]):
+        for i in range(self.output_shape[0]):
             # Each Row of Output
-            for j in range(self.output_shape[0]):
+            for j in range(self.output_shape[1]):
                 # Each Column of Output
-                for k in range(self.output_shape[1]):
+                for k in range(self.output_shape[2]):
                     
                     # Get the correct portion of the input to apply kernel to
-                    print(f"input shape: {input_.shape}")
-                    print()
-                    print()
-                    print(f"count_row {count_row}")
-                    print(f"count_Row + kernelsize = {count_row + self.kernelSize}")
-                    print(f"count_col {count_col}")
-                    print(f"count_col + kernelsize = {count_col + self.kernelSize}")                  
-                    print()
-                    print()
-                    input_i = input_[:, count_row:(count_row + self.kernelSize), count_col:(count_col + self.kernelSize)]
-                    print(f"ith input is: {input_i}")
+                    #print(f"input shape: {input_.shape}")
+                    #print()
+                    #print()
+                    #print(f"count_row {count_row}")
+                    #print(f"count_Row + kernelsize = {count_row + self.kernelSize}")
+                    #print(f"count_col {count_col}")
+                    #print(f"count_col + kernelsize = {count_col + self.kernelSize}")                  
+                    #print()
+                    #print()
                     
+                    input_i = input_[:, j:(j + self.kernelSize), k:(k + self.kernelSize)]
+                    #print(f"ith input is: {input_i}")
+                    
+                    # reshape 3D to 1D so it can be fed to Neuron class
                     input_i = np.reshape(input_i, input_i.shape[0]*input_i.shape[1]*input_i.shape[2])
                     
-                    self.output[j, k, i] = self.neurons[j, k, i].calculate(input_i)
-                    count_col = count_col + 1
-                count_col = 0
-                count_row = count_row + 1
-        
-            count_row = 0    
+                    self.output[i, j, k] = self.neurons[i, j, k].calculate(input_i)
+                    
         
         return self.output   # I don't think this will be needed
         
     def calculatewdeltas(self, sum_wtimesdelta):
-        pass
+        #wtimesdelta is a 2D matrix from the previous layer
+
+        # 2D Matrix of wtimesdelta weights (each row is for a neuron's delta*w vector from this layer)
+        prev_wtimes_delta = np.zeros([self.numOfNeurons, self.input_num+1])
+
+        # Iterates through neurons top to bottom and calculates the wtimesdelta vector for each one
+        for i in range(self.numOfNeurons):
+
+            if last == "last":
+                # loss derivatives are the first wtimesdelta values passed, so wtimesdelta is really a misnomer
+                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
+            else:
+                # Update all other layers with w times delta values
+                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
+            #update the ith neuron
+            self.neurons[i].updateweight()
+        
+        # If the w*deltas should be summed, it could happen here, summing column-wise
+        return prev_wtimes_delta
 
 
 
@@ -461,8 +466,16 @@ if __name__=="__main__":
         # Check if ConvolutionalLayer class is creating weights correctly
         # numKernels, kernelSize, activation, inputDim, lr, weights=None
         #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([5, 5, 3]), 0.01)   # example in notes
-        conv_lay = ConvolutionalLayer(1, 2, "logistic", np.array([4, 4, 2]), 0.01) 
+        conv_lay = ConvolutionalLayer(1, 2, "logistic", np.array([2, 4, 4]), 0.01) 
         # Check if input_ is reshaped correctly in CL calculate method
+        CL_test_input = np.array([[[1, 2, 3, 4], 
+                                   [5, 6, 7, 8], 
+                                   [9, 10, 11, 12], 
+                                   [13, 14, 15, 16]],
+                                  [[-1, -2, -3, -4],
+                                   [-5, -6, -7, -8],
+                                   [-9, -10, -11, -12],
+                                   [-13, -14, -15, -16]]])
         CL_test_input = np.array([[[1, 2, 3, 4], 
                                    [5, 6, 7, 8], 
                                    [9, 10, 11, 12], 
@@ -476,7 +489,7 @@ if __name__=="__main__":
         output = conv_lay.calculate(CL_test_input)
         
         
-        print(output)
+        print(output.shape)
 
 
 
