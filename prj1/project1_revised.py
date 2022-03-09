@@ -140,7 +140,7 @@ class FullyConnected:
         
             
     #given the next layer's w*delta, should run through the neurons calling calcpartialderivative() for each (with the correct value), sum up its ownw*delta, and then update the wieghts (using the updateweight() method). I should return the sum of w*delta.          
-    def calcwdeltas(self, wtimesdelta, last=None):
+    def calcwdeltas(self, wtimesdelta):
         #wtimesdelta is a 2D matrix from the previous layer
 
         # 2D Matrix of wtimesdelta weights (each row is for a neuron's delta*w vector from this layer)
@@ -149,16 +149,15 @@ class FullyConnected:
         # Iterates through neurons top to bottom and calculates the wtimesdelta vector for each one
         for i in range(self.numOfNeurons):
 
-            if last == "last":
-                # loss derivatives are the first wtimesdelta values passed, so wtimesdelta is really a misnomer
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
-            else:
-                # Update all other layers with w times delta values
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
+            # Update a layer with w times delta values (sum of w times delta -scalar- since it's being fed to a neuron) from previous layer
+            prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
+            
             #update the ith neuron
             self.neurons[i].updateweight()
         
-        # If the w*deltas should be summed, it could happen here, summing column-wise
+        # columnwise sum to get a 1D array of wtimesdelta sums for each neuron of the next layer to be updated
+        prev_wtimes_delta = np.sum(prev_wtimes_delta, axis=0)
+
         return prev_wtimes_delta
 
 
@@ -290,7 +289,7 @@ class NeuralNetwork:
             # i goes len(layers) - 1, len(layers) - 2,..., 1, 0
             if i == len(self.layers) - 1:
                 # Get wdeltas differently for the last layer b/c wtimesdeltas given is a vector of the loss derivatives
-                next_wdeltas.append(self.layers[i].calcwdeltas(loss_deriv, "last"))
+                next_wdeltas.append(self.layers[i].calcwdeltas(loss_deriv))
                 
             else:
                 # iterate through the rest of the layers normally
@@ -320,10 +319,10 @@ if __name__=="__main__":
         y=np.array([[0.01, 0.99]])
 
         # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        #example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]), w)
+        example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]), w)
         
         # example code to show the netwrok can scale
-        example_network = NeuralNetwork(3, np.array([10,10, 2]), 2, ["logistic", "logistic", "logistic"], "square error", float(sys.argv[1]))
+        #example_network = NeuralNetwork(3, np.array([10,10, 2]), 2, ["logistic", "logistic", "logistic"], "square error", float(sys.argv[1]))
         
         #extra
         losses = []
