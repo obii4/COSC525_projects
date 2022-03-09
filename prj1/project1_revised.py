@@ -80,7 +80,7 @@ class Neuron:
         actderiv = self.activationderivative()
 
         # (eqn 2 on summary page) (scalar)
-        prev_delta = np.sum(wtimesdelta)*actderiv
+        prev_delta = wtimesdelta*actderiv
 
 
         # (partial E / partial w)'s (for the weights, but not the bias)
