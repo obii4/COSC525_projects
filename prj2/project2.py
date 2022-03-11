@@ -433,6 +433,17 @@ class FlattenLayer:
 
         return self.unflat
 
+# class MaxPoolingLayer:
+#     def __init__(self, kernal, inputDim):
+#         self.kernal = kernal
+#         self.inputDim = inputDim
+#         self.mask = None
+#     def calculate(self, input):
+#
+#
+#     def calculatewdeltas(self, FL_out):
+#         # wtimesdelta is a 2D matrix from the previous layer
+
 
 
 
@@ -585,6 +596,7 @@ class NeuralNetwork:
 #          or: 1 and 1000
 #          or: 0.1 xor 1000
 
+
 if __name__=="__main__":
     # Testing Code
     if (len(sys.argv)<3):
@@ -694,22 +706,24 @@ if __name__=="__main__":
         
         ###### Test code for flatten layer ###########
         input = np.array([[[1, 2, 3, 4],
-                           [5, 6, 7, 8],
-                           [9, 10, 11, 12],
-                           [13, 14, 15, 16]],
-                          [[-1, -2, -3, -4],
-                           [-5, -6, -7, -8],
-                           [-9, -10, -11, -12],
-                           [-13, -14, -15, -16]]])
-        
+                                   [5, 6, 7, 8],
+                                   [9, 10, 11, 12],
+                                   [13, 14, 15, 16]],
+                                   [[-1, -2, -3, -4],
+                                   [-5, -6, -7, -8],
+                                   [-9, -10, -11, -12],
+                                   [-13, -14, -15, -16]]])
+
         print(input)
         FL = FlattenLayer(input)
         output = FL.calculate(input)
         print(output)
 
         unflattten = FL.calculatewdeltas(output)
+
         print(unflattten)
-        ###### Test code for flatten layer ###########
+
+
 
 
     elif (sys.argv[2] == 'example1'):
@@ -732,11 +746,6 @@ if __name__=="__main__":
 
         l1k1, l1k2, l1b1, l1b2, l3, l3b, input, output = generateExample3()
         example3()
-        
-        
-        
-        
-        
         
     elif (sys.argv[2]=='example'):
         
