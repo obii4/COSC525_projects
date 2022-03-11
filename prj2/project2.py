@@ -281,6 +281,17 @@ class ConvolutionalLayer:
         # If the w*deltas should be summed, it could happen here, summing column-wise
         return prev_wtimes_delta
 
+class FlattenLayer:
+    # restricted to 2D convolutions , square kernels, stride = 1, padding = 'valid'
+    def __init__(self, inputSize):
+        #only needs to intialize with the input size
+        self.inputSize = inputSize
+
+    # def calculate(self, input_):
+    #
+    # def calculatewdeltas(self, sum_wtimesdelta):
+    #     # wtimesdelta is a 2D matrix from the previous layer
+
 
 
 
@@ -436,270 +447,297 @@ class NeuralNetwork:
 #          or: 1 and 1000
 #          or: 0.1 xor 1000
 
-if __name__=="__main__":
-    # Testing Code
-    if (len(sys.argv)<3):
-        
-        # args: inputSize, loss, lr (check if NeuralNetwork class works after changing config --check)
-        example_network = NeuralNetwork(10, "square error", float(sys.argv[1]))
-        
-        # layerType, numOfNeurons, activation, weights=None (check if addLayer is working for FCL case --check)
-        example_network.addLayer("FCL", 5, "logistic")
-        
-        
-        # Check if addLayer method is initializing weights correctly when none are given for FCL case --check
-        for i, lays in enumerate(example_network.layers):
-            for j, neurs in enumerate(lays.neurons):
-                #print(f"Layer {i + 1} Neuron {j + 1} ")
-                #print(lays.neurons[j].weights[:])
-                pass
-        
-        # Check if update to inputSize is working within the NN class for FCL case --check
-        example_network.addLayer("FCL", 5, "logistic")
-        
-        for i, lays in enumerate(example_network.layers):
-            for j, neurs in enumerate(lays.neurons):
-                #print(f"Layer {i + 1} Neuron {j + 1} ")
-                #print(lays.neurons[j].weights[:])
-                pass
 
-        # Check if ConvolutionalLayer class is creating weights correctly
-        # numKernels, kernelSize, activation, inputDim, lr, weights=None
-        #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([5, 5, 3]), 0.01)   # example in notes
-        conv_lay = ConvolutionalLayer(1, 2, "logistic", np.array([2, 4, 4]), 0.01) 
-        # Check if input_ is reshaped correctly in CL calculate method
-        CL_test_input = np.array([[[1, 2, 3, 4], 
-                                   [5, 6, 7, 8], 
-                                   [9, 10, 11, 12], 
-                                   [13, 14, 15, 16]],
-                                  [[-1, -2, -3, -4],
-                                   [-5, -6, -7, -8],
-                                   [-9, -10, -11, -12],
-                                   [-13, -14, -15, -16]]])
-        CL_test_input = np.array([[[1, 2, 3, 4], 
-                                   [5, 6, 7, 8], 
-                                   [9, 10, 11, 12], 
-                                   [13, 14, 15, 16]],
-                                  [[-1, -2, -3, -4],
-                                   [-5, -6, -7, -8],
-                                   [-9, -10, -11, -12],
-                                   [-13, -14, -15, -16]]])
-        print(f" test input size: {CL_test_input.shape}")
-        
-        output = conv_lay.calculate(CL_test_input)
-        
-        
-        print(output.shape)
+if __name__ == "__main__":
+    if (len(sys.argv) < 3):
+        print('a good place to test different parts of your code')
+
+    elif (sys.argv[2] == 'example1'):
+        from tensorflowtest_example1 import example1
+        from parameters import generateExample1
+
+        l1k1, l1b1, l2, l2b, input, output = generateExample1()
+        example1()
+
+    elif (sys.argv[2] == 'example2'):
+        from tensorflowtest_example2 import example2
+        from parameters import generateExample2
+
+        l1k1, l1k2, l1b1, l1b2, l2c1, l2c2, l2b, l3, l3b, input, output = generateExample2()
+        example2()
+
+    elif (sys.argv[2] == 'example3'):
+        from tensorflowtest_example3 import example3
+        from parameters import generateExample3
+
+        l1k1, l1k2, l1b1, l1b2, l3, l3b, input, output = generateExample3()
+        example3()
 
 
-
-
-        
-        
-    elif (sys.argv[2]=='example'):
-        
-        num_epochs = int(sys.argv[3])
-        
-        print(f"Run example from class (single step) for {num_epochs} epochs.")
-
-        w=np.array([[[.15,.2,.35],[.25,.3,.35]],[[.4,.45,.6],[.5,.55,.6]]])
-        x=np.array([[0.05, 0.1]])
-        y=np.array([[0.01, 0.99]])
-
-        # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        #example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]), w)
-        
-        # example code to show the netwrok can scale
-        example_network = NeuralNetwork(3, np.array([10,10, 2]), 2, ["logistic", "logistic", "logistic"], "square error", float(sys.argv[1]))
-        
-        #extra
-        losses = []
-        
-        
-        # Train the network, each epoch goes through all of the datapoints
-        # For example: if num_epochs = 100 & there are 10 training datapoints (i.e len(y) = 10) then the weights are updated 10 * 100 = 1,000 times
-        for i in range(num_epochs):
-            
-            # extra
-            yp = np.zeros((2,1))
-            
-            
-            for i in range(len(y)):
-                # Train the network for 1 datapoint
-                network_output = example_network.train(x[i], y[i])
-                #print(network_output)
-                # store the prediction for the datapoint
-                yp[:, i] = network_output.T
-            
-            # Append the loss from the epoch
-            losses.append(example_network.calculateloss(yp.T, y))
-
-
-        print(f"Network final predictions {yp[:, -1]}")
-        print("Expected Output: [0.01, 0.99]")
-
-        ### Plot the convergence
-        
-        plt.figure(dpi=150)
-        plt.plot(range(len(losses)), losses)
-
-        #figure formatting
-        plt.title("Convergence Curve: Example")
-        plt.xlabel("Epochs")
-        plt.ylabel("Error")
-        
-        plt.show()
-
-
-
-        # Printing the weights going Layers left to right & Neurons top to bottom
-        for i, lays in enumerate(example_network.layers):
-
-            for j, neurs in enumerate(lays.neurons):
-                print(f"Layer {i + 1} Neuron {j + 1} ")
-                print(lays.neurons[j].weights[:])
-
-
-
-
-    elif(sys.argv[2]=='and'):
-                
-        num_epochs = int(sys.argv[3])
-
-        print(f"Training AND gate for {num_epochs} epochs.")
-
-        
-        and_inputs = np.array([[0, 0],
-                               [0, 1],
-                               [1, 0],
-                               [1, 1]])
-
-        and_outputs = np.array([[0],
-                                [0],
-                                [0],
-                                [1]])
-
-
-        ### Initiate the Neural Network
-
-        #test_weights = np.array([np.array([[1, 1, 5]])])
-
-        # params: numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        SLP_network = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", float(sys.argv[1]))
-
-
-        ### Train the Neural Network
-
-        losses = []
-
-        for i in range(num_epochs):
-
-            # vector of predictions for each datapoint in the dataset
-            yp = np.zeros((len(and_outputs),1))
-            
-            # train network using whole dataset (1 epoch) and update weights each iteration for the datapoint being used
-            for i in range(len(and_outputs)):
-
-                network_output = SLP_network.train(and_inputs[i], and_outputs[i])
-
-                # store the prediction for the datapoint
-                yp[i] = network_output
-            
-            # Append the loss from the epoch
-            losses.append(SLP_network.calculateloss(yp, and_outputs))
-
-
-        print(f"Converging network final predictions {yp[:, -1]}")
-        print("Expected Output: [0, 0, 0, 1]")
-
-        ### Plot the convergence
-        
-        plt.figure(dpi=150)
-        plt.plot(range(len(losses)), losses)
-
-        #figure formatting
-        plt.title("Convergence Curves: AND Gate")
-        plt.xlabel("Epochs")
-        plt.ylabel("Error")
-        
-        plt.show()
-        
-    elif(sys.argv[2]=='xor'):
-
-        num_epochs = int(sys.argv[3])
-
-        print(f"Training XOR gate for {num_epochs} epochs.")
-
-        xor_inputs = np.array([[0, 0],
-                               [0, 1],
-                               [1, 0],
-                               [1, 1]])
-        xor_outputs = np.array([[0],
-                                [1],
-                                [1],
-                                [0]])
-        
-
-        ### Initialize the Network
-
-        # 5 x 1 network -> converges
-        converging_network = NeuralNetwork(2, np.array([5, 1]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]))
-        
-
-        # Single Perceptron -> does NOT converge
-        SLP_network = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", float(sys.argv[1]))
-
-
-        
-        ### Train the Neural Network
-
-        # Lists for storing the losses at end of each epoch for plotting
-        losses_conv= []
-        losses_nconv = []
-
-        for j in range(num_epochs):
-
-            # vector of predictions for each datapoint in the dataset
-            yp_conv = np.zeros((len(xor_outputs),1))
-            
-            yp_nconv = np.zeros((len(xor_outputs),1))
-            # train network using whole dataset (1 epoch) and update weights each iteration for the datapoint being used
-            for i in range(len(xor_outputs)):
-
-                # Train both networks
-                print(f"input shape {xor_inputs[i].shape}")
-                print(f"input shape {xor_outputs[i].shape}")
-                converging_network_output = converging_network.train(xor_inputs[i], xor_outputs[i])
-                SLP_network_output = SLP_network.train(xor_inputs[i], xor_outputs[i])
-
-                # store the prediction for the datapoint for each network
-                yp_conv[i] = converging_network_output
-                yp_nconv[i] = SLP_network_output
-            
-                
-
-            # Append the loss from the epoch to know when to stop the while loop
-            losses_conv.append(converging_network.calculateloss(yp_conv, xor_outputs))
-            losses_nconv.append(SLP_network.calculateloss(yp_nconv, xor_outputs))
-
-        
-        print(f"Converging network final predictions {yp_conv[:, -1]}")
-        print(f"Not Converging SLP final predictions {yp_nconv[:, -1]}")
-        print("Expected Output: [0, 1, 1, 0]")
-
-
-        ### Plot the convergence
-
-
-        plt.figure(dpi=150)
-        plt.plot(range(len(losses_conv)), losses_conv)
-        plt.plot(range(len(losses_nconv)), losses_nconv)
-
-
-        #figure formatting
-        plt.title("Convergence Curves: XOR Gate")
-        plt.xlabel("Epochs")
-        plt.ylabel("Error")
-        plt.legend(["Converging Network [5 x 1]", "Not Converging SLP"])
-        
-        plt.show()
+# if __name__=="__main__":
+#     # Testing Code
+#         if (len(sys.argv)<3):
+#
+#             # args: inputSize, loss, lr (check if NeuralNetwork class works after changing config --check)
+#             example_network = NeuralNetwork(10, "square error", float(sys.argv[1]))
+#
+#             # layerType, numOfNeurons, activation, weights=None (check if addLayer is working for FCL case --check)
+#             example_network.addLayer("FCL", 5, "logistic")
+#
+#
+#             # Check if addLayer method is initializing weights correctly when none are given for FCL case --check
+#             for i, lays in enumerate(example_network.layers):
+#                 for j, neurs in enumerate(lays.neurons):
+#                     #print(f"Layer {i + 1} Neuron {j + 1} ")
+#                     #print(lays.neurons[j].weights[:])
+#                     pass
+#
+#             # Check if update to inputSize is working within the NN class for FCL case --check
+#             example_network.addLayer("FCL", 5, "logistic")
+#
+#             for i, lays in enumerate(example_network.layers):
+#                 for j, neurs in enumerate(lays.neurons):
+#                     #print(f"Layer {i + 1} Neuron {j + 1} ")
+#                     #print(lays.neurons[j].weights[:])
+#                     pass
+#
+#             # Check if ConvolutionalLayer class is creating weights correctly
+#             # numKernels, kernelSize, activation, inputDim, lr, weights=None
+#             #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([5, 5, 3]), 0.01)   # example in notes
+#             conv_lay = ConvolutionalLayer(1, 2, "logistic", np.array([2, 4, 4]), 0.01)
+#             # Check if input_ is reshaped correctly in CL calculate method
+#             CL_test_input = np.array([[[1, 2, 3, 4],
+#                                        [5, 6, 7, 8],
+#                                        [9, 10, 11, 12],
+#                                        [13, 14, 15, 16]],
+#                                       [[-1, -2, -3, -4],
+#                                        [-5, -6, -7, -8],
+#                                        [-9, -10, -11, -12],
+#                                        [-13, -14, -15, -16]]])
+#             CL_test_input = np.array([[[1, 2, 3, 4],
+#                                        [5, 6, 7, 8],
+#                                        [9, 10, 11, 12],
+#                                        [13, 14, 15, 16]],
+#                                       [[-1, -2, -3, -4],
+#                                        [-5, -6, -7, -8],
+#                                        [-9, -10, -11, -12],
+#                                        [-13, -14, -15, -16]]])
+#             print(f" test input size: {CL_test_input.shape}")
+#
+#             output = conv_lay.calculate(CL_test_input)
+#
+#
+#             print(output.shape)
+#
+#
+#
+#
+#
+#
+#     elif (sys.argv[2]=='example'):
+#
+#         num_epochs = int(sys.argv[3])
+#
+#         print(f"Run example from class (single step) for {num_epochs} epochs.")
+#
+#         w=np.array([[[.15,.2,.35],[.25,.3,.35]],[[.4,.45,.6],[.5,.55,.6]]])
+#         x=np.array([[0.05, 0.1]])
+#         y=np.array([[0.01, 0.99]])
+#
+#         # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
+#         #example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]), w)
+#
+#         # example code to show the netwrok can scale
+#         example_network = NeuralNetwork(3, np.array([10,10, 2]), 2, ["logistic", "logistic", "logistic"], "square error", float(sys.argv[1]))
+#
+#         #extra
+#         losses = []
+#
+#
+#         # Train the network, each epoch goes through all of the datapoints
+#         # For example: if num_epochs = 100 & there are 10 training datapoints (i.e len(y) = 10) then the weights are updated 10 * 100 = 1,000 times
+#         for i in range(num_epochs):
+#
+#             # extra
+#             yp = np.zeros((2,1))
+#
+#
+#             for i in range(len(y)):
+#                 # Train the network for 1 datapoint
+#                 network_output = example_network.train(x[i], y[i])
+#                 #print(network_output)
+#                 # store the prediction for the datapoint
+#                 yp[:, i] = network_output.T
+#
+#             # Append the loss from the epoch
+#             losses.append(example_network.calculateloss(yp.T, y))
+#
+#
+#         print(f"Network final predictions {yp[:, -1]}")
+#         print("Expected Output: [0.01, 0.99]")
+#
+#         ### Plot the convergence
+#
+#         plt.figure(dpi=150)
+#         plt.plot(range(len(losses)), losses)
+#
+#         #figure formatting
+#         plt.title("Convergence Curve: Example")
+#         plt.xlabel("Epochs")
+#         plt.ylabel("Error")
+#
+#         plt.show()
+#
+#
+#
+#         # Printing the weights going Layers left to right & Neurons top to bottom
+#         for i, lays in enumerate(example_network.layers):
+#
+#             for j, neurs in enumerate(lays.neurons):
+#                 print(f"Layer {i + 1} Neuron {j + 1} ")
+#                 print(lays.neurons[j].weights[:])
+#
+#
+#
+#
+#     elif(sys.argv[2]=='and'):
+#
+#         num_epochs = int(sys.argv[3])
+#
+#         print(f"Training AND gate for {num_epochs} epochs.")
+#
+#
+#         and_inputs = np.array([[0, 0],
+#                                [0, 1],
+#                                [1, 0],
+#                                [1, 1]])
+#
+#         and_outputs = np.array([[0],
+#                                 [0],
+#                                 [0],
+#                                 [1]])
+#
+#
+#         ### Initiate the Neural Network
+#
+#         #test_weights = np.array([np.array([[1, 1, 5]])])
+#
+#         # params: numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
+#         SLP_network = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", float(sys.argv[1]))
+#
+#
+#         ### Train the Neural Network
+#
+#         losses = []
+#
+#         for i in range(num_epochs):
+#
+#             # vector of predictions for each datapoint in the dataset
+#             yp = np.zeros((len(and_outputs),1))
+#
+#             # train network using whole dataset (1 epoch) and update weights each iteration for the datapoint being used
+#             for i in range(len(and_outputs)):
+#
+#                 network_output = SLP_network.train(and_inputs[i], and_outputs[i])
+#
+#                 # store the prediction for the datapoint
+#                 yp[i] = network_output
+#
+#             # Append the loss from the epoch
+#             losses.append(SLP_network.calculateloss(yp, and_outputs))
+#
+#
+#         print(f"Converging network final predictions {yp[:, -1]}")
+#         print("Expected Output: [0, 0, 0, 1]")
+#
+#         ### Plot the convergence
+#
+#         plt.figure(dpi=150)
+#         plt.plot(range(len(losses)), losses)
+#
+#         #figure formatting
+#         plt.title("Convergence Curves: AND Gate")
+#         plt.xlabel("Epochs")
+#         plt.ylabel("Error")
+#
+#         plt.show()
+#
+#     elif(sys.argv[2]=='xor'):
+#
+#         num_epochs = int(sys.argv[3])
+#
+#         print(f"Training XOR gate for {num_epochs} epochs.")
+#
+#         xor_inputs = np.array([[0, 0],
+#                                [0, 1],
+#                                [1, 0],
+#                                [1, 1]])
+#         xor_outputs = np.array([[0],
+#                                 [1],
+#                                 [1],
+#                                 [0]])
+#
+#
+#         ### Initialize the Network
+#
+#         # 5 x 1 network -> converges
+#         converging_network = NeuralNetwork(2, np.array([5, 1]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]))
+#
+#
+#         # Single Perceptron -> does NOT converge
+#         SLP_network = NeuralNetwork(1, np.array([1]), 2, ["logistic"], "square error", float(sys.argv[1]))
+#
+#
+#
+#         ### Train the Neural Network
+#
+#         # Lists for storing the losses at end of each epoch for plotting
+#         losses_conv= []
+#         losses_nconv = []
+#
+#         for j in range(num_epochs):
+#
+#             # vector of predictions for each datapoint in the dataset
+#             yp_conv = np.zeros((len(xor_outputs),1))
+#
+#             yp_nconv = np.zeros((len(xor_outputs),1))
+#             # train network using whole dataset (1 epoch) and update weights each iteration for the datapoint being used
+#             for i in range(len(xor_outputs)):
+#
+#                 # Train both networks
+#                 print(f"input shape {xor_inputs[i].shape}")
+#                 print(f"input shape {xor_outputs[i].shape}")
+#                 converging_network_output = converging_network.train(xor_inputs[i], xor_outputs[i])
+#                 SLP_network_output = SLP_network.train(xor_inputs[i], xor_outputs[i])
+#
+#                 # store the prediction for the datapoint for each network
+#                 yp_conv[i] = converging_network_output
+#                 yp_nconv[i] = SLP_network_output
+#
+#
+#
+#             # Append the loss from the epoch to know when to stop the while loop
+#             losses_conv.append(converging_network.calculateloss(yp_conv, xor_outputs))
+#             losses_nconv.append(SLP_network.calculateloss(yp_nconv, xor_outputs))
+#
+#
+#         print(f"Converging network final predictions {yp_conv[:, -1]}")
+#         print(f"Not Converging SLP final predictions {yp_nconv[:, -1]}")
+#         print("Expected Output: [0, 1, 1, 0]")
+#
+#
+#         ### Plot the convergence
+#
+#
+#         plt.figure(dpi=150)
+#         plt.plot(range(len(losses_conv)), losses_conv)
+#         plt.plot(range(len(losses_nconv)), losses_nconv)
+#
+#
+#         #figure formatting
+#         plt.title("Convergence Curves: XOR Gate")
+#         plt.xlabel("Epochs")
+#         plt.ylabel("Error")
+#         plt.legend(["Converging Network [5 x 1]", "Not Converging SLP"])
+#
+#         plt.show()
