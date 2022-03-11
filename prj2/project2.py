@@ -20,12 +20,14 @@ from numpy.random import default_rng
 rng = default_rng(seed)
 
 
-
-
-
-
-
-
+# function used for padding from numpy website: https://numpy.org/doc/stable/reference/generated/numpy.pad.html
+def pad_with(vector, pad_width, iaxis, kwargs):
+    pad_value = kwargs.get('padder', 111)
+    vector[:pad_width[0]] = pad_value
+    vector[-pad_width[1]:] = pad_value
+    
+    
+    
 
 # A class which represents a single neuron
 class Neuron:
@@ -93,7 +95,30 @@ class Neuron:
         actderiv = self.activationderivative()
 
         # (eqn 2 on summary page) (scalar)
-        prev_delta = np.sum(wtimesdelta)*actderiv
+        prev_delta = wtimesdelta*actderiv
+
+
+        # (partial E / partial w)'s (for the weights, but not the bias)
+        partial_derivatives = prev_delta*self.inputs
+
+        # adding just the prev_delta term to the end since bias isn't multiplied by an input
+        self.partialderivatives = np.append(partial_derivatives, prev_delta)
+
+        # w * delta vector to be used in the previous layer (wtimesdelta passed back from this neuron)
+        # last value is the bias which isn't really needed/used since there is no w*delta term needed for the bias
+        prev_wtimesdelta = prev_delta*self.weights
+
+        #prev_wtimesdelta[-1] = prev_delta   # Unnecessary code I originally included, shouldn't affect any calculations
+
+        return prev_wtimesdelta
+    
+    def calcpartialderivativeCL(self, wtimesdelta):
+        
+        # Assuming wtimesdelta is a lx1 vector of w x delta values from the next layer of size lx1
+        actderiv = self.activationderivative()
+
+        # (eqn 2 on summary page) (scalar)
+        prev_delta = wtimesdelta*actderiv
 
 
         # (partial E / partial w)'s (for the weights, but not the bias)
@@ -154,7 +179,7 @@ class FullyConnected:
         
             
     #given the next layer's w*delta, should run through the neurons calling calcpartialderivative() for each (with the correct value), sum up its ownw*delta, and then update the wieghts (using the updateweight() method). I should return the sum of w*delta.          
-    def calcwdeltas(self, wtimesdelta, last=None):
+    def calcwdeltas(self, wtimesdelta):
         #wtimesdelta is a 2D matrix from the previous layer
 
         # 2D Matrix of wtimesdelta weights (each row is for a neuron's delta*w vector from this layer)
@@ -163,16 +188,15 @@ class FullyConnected:
         # Iterates through neurons top to bottom and calculates the wtimesdelta vector for each one
         for i in range(self.numOfNeurons):
 
-            if last == "last":
-                # loss derivatives are the first wtimesdelta values passed, so wtimesdelta is really a misnomer
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
-            else:
-                # Update all other layers with w times delta values
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
+            # Update a layer with w times delta values (sum of w times delta -scalar- since it's being fed to a neuron) from previous layer
+            prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
+            
             #update the ith neuron
             self.neurons[i].updateweight()
         
-        # If the w*deltas should be summed, it could happen here, summing column-wise
+        # columnwise sum to get a 1D array of wtimesdelta sums for each neuron of the next layer to be updated
+        prev_wtimes_delta = np.sum(prev_wtimes_delta, axis=0)
+
         return prev_wtimes_delta
 
 # A class for a Convolutional Layer
@@ -185,12 +209,12 @@ class ConvolutionalLayer:
         self.activation = activation 
         self.inputDim = inputDim # np.array([m, n, p]) (doesn't have to be square), m = num input channels, n = height of input, p = width of input, 
         self.lr = lr
-        self.weights = weights if weights is not None else np.random.rand(kernelSize, kernelSize, inputDim[0], numKernels)
+        self.weights = weights if weights is not None else np.random.rand(numKernels, inputDim[0], kernelSize, kernelSize)
         #print(f"self.weights print out: {self.weights}")
         #print(f"self.weights SHAPE print out: {self.weights.shape}")
         # unlike FCL, biases is its own attribute for a CL
         self.biases = np.random.rand(numKernels) # one for each kernel
-    
+        self.input = None
         # needed for reshaping neuron weights and is the same as the neuron input dim (which may or may not be needed to be included)
         numweights_per_neuron = kernelSize * kernelSize * inputDim[0]
         
@@ -215,7 +239,7 @@ class ConvolutionalLayer:
                 for k in range(self.output_shape[2]):
                     
                     # neurons require 1D vector of weights, so they are reshaped from 4D (really 3D) to 1D
-                    _neuron_weights = np.reshape(self.weights[:, :, :, i], numweights_per_neuron)
+                    _neuron_weights = np.reshape(self.weights[i, :, :, :], numweights_per_neuron)
                     
                     # add bias to the end of the neuron weights
                     _neuron_weights = np.append(_neuron_weights, self.biases[i])
@@ -225,9 +249,11 @@ class ConvolutionalLayer:
                     self.neurons[i, j, k] = Neuron(self.activation, numweights_per_neuron, self.lr, _neuron_weights)
                     
                     
-        print(self.neurons.shape)
+        #print(self.neurons.shape)
     def calculate(self, input_):
         # All inputs will be assumed to be 2D numpy arrays
+        
+        self.input= input_
         
         ### Calculate Each Neuron's output and store it in the output attribute
         
@@ -255,34 +281,157 @@ class ConvolutionalLayer:
                     # reshape 3D to 1D so it can be fed to Neuron class
                     input_i = np.reshape(input_i, input_i.shape[0]*input_i.shape[1]*input_i.shape[2])
                     
+                    #print(input_i)
+                    #print(self.neurons[i, j, k].weights)
+                    
                     self.output[i, j, k] = self.neurons[i, j, k].calculate(input_i)
                     
         
         return self.output   # I don't think this will be needed
         
-    def calculatewdeltas(self, sum_wtimesdelta):
-        #wtimesdelta is a 2D matrix from the previous layer
-
-        # 2D Matrix of wtimesdelta weights (each row is for a neuron's delta*w vector from this layer)
-        prev_wtimes_delta = np.zeros([self.numOfNeurons, self.input_num+1])
-
-        # Iterates through neurons top to bottom and calculates the wtimesdelta vector for each one
-        for i in range(self.numOfNeurons):
-
-            if last == "last":
-                # loss derivatives are the first wtimesdelta values passed, so wtimesdelta is really a misnomer
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
-            else:
-                # Update all other layers with w times delta values
-                prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[:, i])
-            #update the ith neuron
-            self.neurons[i].updateweight()
+    def calculatewdeltas(self, wtimesdelta):
+        #wtimesdelta is a 3D matrix from the previous layer m x n x p: m = num channels; n = 2D delta matrix height; p = 2D delta matrix width
+        # one delta for each neuron
         
-        # If the w*deltas should be summed, it could happen here, summing column-wise
-        return prev_wtimes_delta
+        # 4D Matrix of partials to update weights
+        partial_derivatives = np.zeros([self.numKernels, self.inputDim[0], self.kernelSize, self.kernelSize])
+        
+        # cross-correlation of input with delta's to calculate the (partial E / partial w)'s partial derivatives for each weight w
+        for h in range(self.numKernels):   # iterate through wtimesdelta channels. I had wtimesdelta.shape[0] before which should be the same
+            # Each Output Channel  
+            for i in range(self.inputDim[0]):   # num of input channels (Don't need?)
+                # Each Row of Output
+                for j in range(self.kernelSize):   # kernelSize = (input_height - output_height / stride) + 1 so we use kernelSize for simplicity
+                    # Each Column of Output
+                    for k in range(self.kernelSize):   # # kernelSize = (input_width - output_width / stride) + 1 so we use kernelSize for simplicity
+                    
+                        #find correct portion 3D portion of the input and flatten it  
+                        input_ij = np.reshape(self.input[i, j:(j + self.output_shape[1]), k:(k + self.output_shape[2])], self.output_shape[1]*self.output_shape[2])
+                        wtimesdelta_ij = np.reshape(wtimesdelta[h, :, :], self.output_shape[1]*self.output_shape[2])
+                        
+                        #calc partial derivative for a single weight and add it to the matrix
+                        partial_derivatives[h, i, j, k] = np.dot(input_ij, wtimesdelta_ij)
+
+        # Update the weights. Iterate through all neurons and use corresponding partial derivatives (flattened) to update the weights
+        print("before:")
+        print(self.neurons[0, 0, 0].weights)
+        print()
+        
+        # iterate through all neurons
+        
+        # Each Output Channel
+        for i in range(self.output_shape[0]):
+            # Each Row of Output
+            for j in range(self.output_shape[1]):
+                # Each Column of Output
+                for k in range(self.output_shape[2]):
+                    
+                    # pass back flattened partial derivatives
+                    self.neurons[i, j, k].partialderivatives = np.reshape(partial_derivatives[i, :, :, :], self.inputDim[0]*self.kernelSize*self.kernelSize)
+                    
+                    # add partial derivative of bias (add 1 to the end)
+                    self.neurons[i, j, k].partialderivatives = np.append(self.neurons[i, j, k].partialderivatives, 1.0)
+                    
+                    #update weights with new partial derivatives
+                    self.neurons[i, j, k].updateweight()
+        
+        
+        
+        print("after")
+        print(self.neurons[0, 0, 0].weights)
+        
+        
+        # Calculate (partial E / partial out)'s or "wtimesdelta" for previous layer
+        
+        # initialize partial E wrt input (same size as input)
+        wtimesdelta_prev = np.zeros((self.inputDim[0], self.inputDim[1], self.inputDim[2]))
+        
+        # add padding to wtimesdelta
+        padding_for_a_side = self.inputDim[1] - self.output_shape[1]  # calculate padding needed for a side (Note inputs/outputs assumed to be square here so 1 is arbitrary - could be 2)
+        padded_wtimesdelta = np.zeros((wtimesdelta.shape[0], wtimesdelta.shape[1] + 2*padding_for_a_side, wtimesdelta.shape[2] + 2*padding_for_a_side))
+        
+        print(f" padding for a side = {padding_for_a_side}")
+        print(f"padded_wtimesdelta shape:{padded_wtimesdelta.shape}")
+        print(f"wtimesdelta shape: {wtimesdelta.shape}")
+        # call pad_with function at top of script, use padding values of zero
+        for i in range(wtimesdelta.shape[0]):
+            padded_wtimesdelta[i, :, :] = np.pad(wtimesdelta[i, :, :], padding_for_a_side, pad_with, padder=0)
+        
+        # iterate through channels of wtimesdelta (same size as output channel since wtimesdelta passed to this layer has same shape as the output shape)
+        for g in range(self.output_shape[0]):
+            # iterate through each kernel
+            for h in range(self.numKernels):
+                # iterate through a kernel channel (number of kernel channels equal to number of input channels)
+                for i in range(self.inputDim[0]):
+                    # iterate through padded wtimesdelta 2D convolved with kernel (apply transpose of kernel across the padded delta matrix)
+                    for j in range(self.inputDim[1]):
+                        for k in range(self.inputDim[2]):
+                        
+                            # I arbitrarily chose the 0,0 neuron since they all neurons in this kernel have shared weights I could choose any of them, I choose 0,0 because at a minimum my output will be a 1x1 with indices 0-0
+                            # get h'th kernel lol
+                            kernel = np.reshape(self.neurons[h, 0, 0].weights[:-1], (self.inputDim[0], self.kernelSize, self.kernelSize))
+                            # get i'th kernel channel and transpose it
+                            kernel_channel = np.transpose(kernel[i, :, :])
+                            
+                            #np.reshape(self.neurons[h, 0, 0].weights[:-1], (self.numKernels, self.kernelSize, self.kernelSize))  (This is what the kernel was before: why did I choose self.numKernels as first dim? mistake? also not transposed, and 3D when should be 2D)
+                            
+                            # add calculation to correct spot in wtimesdelta_prev (Note the calculations are summed across the kernels)
+                            wtimesdelta_prev[i, j, k] = wtimesdelta_prev[i, j, k] + np.sum(np.dot(kernel_channel, padded_wtimesdelta[g, j:(j + self.kernelSize), k:(k + self.kernelSize)]))
+                            
+        print(wtimesdelta_prev.shape)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+# =============================================================================
+#         # 2D Matrix of wtimesdelta weights (each row is for a neuron's delta*w vector from this layer)
+#         prev_wtimes_delta = np.zeros([self.numOfNeurons, self.input_num+1])
+# 
+#         # Iterates through neurons top to bottom and calculates the wtimesdelta vector for each one
+#         for i in range(self.numOfNeurons):
+# 
+#             # Update a layer with w times delta values (sum of w times delta -scalar- since it's being fed to a neuron) from previous layer
+#             prev_wtimes_delta[i, :] = self.neurons[i].calcpartialderivative(wtimesdelta[i])
+#             
+#             #update the ith neuron
+#             self.neurons[i].updateweight()
+#         
+#         # columnwise sum to get a 1D array of wtimesdelta sums for each neuron of the next layer to be updated
+#         prev_wtimes_delta = np.sum(prev_wtimes_delta, axis=0)
+# =============================================================================
+
+        return wtimesdelta_prev
 
 
+class FlattenLayer:
+    # restricted to 2D convolutions , square kernels, stride = 1, padding = 'valid'
+    def __init__(self, input):
+        #only needs to intialize with the input
+        self.input = input
+        self.FL_out = None
+        self.unflat = None
 
+    def calculate(self, input):
+        self.FL_out = input.flatten()
+        self.FL_out = np.reshape(self.FL_out, (len(self.FL_out), 1))
+        return self.FL_out
+
+    def calculatewdeltas(self, FL_out):
+        # wtimesdelta is a 2D matrix from the previous layer
+        re_flat = np.reshape(self.FL_out, (len(self.FL_out),))
+        self.unflat = re_flat.reshape(self.input.shape)
+
+        return self.unflat
 
 
 
@@ -421,7 +570,7 @@ class NeuralNetwork:
             # i goes len(layers) - 1, len(layers) - 2,..., 1, 0
             if i == len(self.layers) - 1:
                 # Get wdeltas differently for the last layer b/c wtimesdeltas given is a vector of the loss derivatives
-                next_wdeltas.append(self.layers[i].calcwdeltas(loss_deriv, "last"))
+                next_wdeltas.append(self.layers[i].calcwdeltas(loss_deriv))
                 
             else:
                 # iterate through the rest of the layers normally
@@ -465,8 +614,23 @@ if __name__=="__main__":
 
         # Check if ConvolutionalLayer class is creating weights correctly
         # numKernels, kernelSize, activation, inputDim, lr, weights=None
-        #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([5, 5, 3]), 0.01)   # example in notes
-        conv_lay = ConvolutionalLayer(1, 2, "logistic", np.array([2, 4, 4]), 0.01) 
+        #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([3, 5, 5]), 0.01)   # example in notes
+        #conv_lay = ConvolutionalLayer(2, 2, "logistic", np.array([2, 4, 4]), 1) 
+        
+        # config 2
+        synthetic_weights = np.array([[[[1, 1],
+                                       [1, 1]],
+                                       [[1, 1],
+                                        [1, 1]]]])
+        
+        
+        
+        #config 1
+        #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([2, 5, 5]), 1)
+        #config 2
+        conv_lay = ConvolutionalLayer(1, 2, "logistic", np.array([2, 5, 5]), 1, synthetic_weights) 
+        
+        
         # Check if input_ is reshaped correctly in CL calculate method
         CL_test_input = np.array([[[1, 2, 3, 4], 
                                    [5, 6, 7, 8], 
@@ -476,24 +640,102 @@ if __name__=="__main__":
                                    [-5, -6, -7, -8],
                                    [-9, -10, -11, -12],
                                    [-13, -14, -15, -16]]])
-        CL_test_input = np.array([[[1, 2, 3, 4], 
-                                   [5, 6, 7, 8], 
-                                   [9, 10, 11, 12], 
-                                   [13, 14, 15, 16]],
-                                  [[-1, -2, -3, -4],
-                                   [-5, -6, -7, -8],
-                                   [-9, -10, -11, -12],
-                                   [-13, -14, -15, -16]]])
-        print(f" test input size: {CL_test_input.shape}")
+        CL_test_input2 = np.array([[[1, 2, 3, 4, 4], 
+                                   [5, 6, 7, 8, 8], 
+                                   [9, 10, 11, 12, 12], 
+                                   [13, 14, 15, 16, 16],
+                                   [17, 18, 19, 20, 20]],
+                                  [[-1, -2, -3, -4, 4],
+                                   [-5, -6, -7, -8, -8],
+                                   [-9, -10, -11, -12, -12],
+                                   [-13, -14, -15, -16, -16],
+                                   [-17, -18, -19, -20, -20]]])
         
-        output = conv_lay.calculate(CL_test_input)
         
         
-        print(output.shape)
+        
+        
+        
+        #print(f" test input size: {CL_test_input.shape}")
+        
+        #output = conv_lay.calculate(CL_test_input)
+        output = conv_lay.calculate(CL_test_input2)
+        print(conv_lay.output_shape)
+        
+        # check calculatewdeltas 
+        
+        
+        #config 1
+#         synthetic_wtimesdelta = np.array([[[1, 1, 1],
+#                                  [1, 1, 1],
+#                                  [1, 1, 1]],
+#                                 [[2, 2, 2],
+#                                  [2, 2, 2],
+#                                  [2, 2, 2]]])
+# =============================================================================
+        # config 2
+        synthetic_wtimesdelta = np.array([[[1, 1, 1, 1],
+                                  [1, 1, 1, 1],
+                                  [1, 1, 1, 1],
+                                  [1, 1, 1, 1]],
+                                 [[2, 2, 2, 2],
+                                  [2, 2, 2, 2],
+                                  [2, 2, 2, 2],
+                                  [2, 2, 2, 2]]])
+        print(f" synthetic_wtimesdelta shape: {synthetic_wtimesdelta.shape}")
+        
+        next_wtimesdelta = conv_lay.calculatewdeltas(synthetic_wtimesdelta)
+        #print(f" Calculated partials from function: {}")
+        print(f" inputs: {conv_lay.input}")
+        
+        # Shape of partial derivatives should be the same as the weights-> print both
+        print(f"weights: {conv_lay.weights}")
+        print(f"previous layer's wtimesdelta': {next_wtimesdelta}")
+        
+        ###### Test code for flatten layer ###########
+        input = np.array([[[1, 2, 3, 4],
+                           [5, 6, 7, 8],
+                           [9, 10, 11, 12],
+                           [13, 14, 15, 16]],
+                          [[-1, -2, -3, -4],
+                           [-5, -6, -7, -8],
+                           [-9, -10, -11, -12],
+                           [-13, -14, -15, -16]]])
+        
+        print(input)
+        FL = FlattenLayer(input)
+        output = FL.calculate(input)
+        print(output)
+
+        unflattten = FL.calculatewdeltas(output)
+        print(unflattten)
+        ###### Test code for flatten layer ###########
 
 
+    elif (sys.argv[2] == 'example1'):
+        from tensorflowtest_example1 import example1
+        from parameters import generateExample1
 
+        l1k1, l1b1, l2, l2b, input, output = generateExample1()
+        example1()
 
+    elif (sys.argv[2] == 'example2'):
+        from tensorflowtest_example2 import example2
+        from parameters import generateExample2
+
+        l1k1, l1k2, l1b1, l1b2, l2c1, l2c2, l2b, l3, l3b, input, output = generateExample2()
+        example2()
+
+    elif (sys.argv[2] == 'example3'):
+        from tensorflowtest_example3 import example3
+        from parameters import generateExample3
+
+        l1k1, l1k2, l1b1, l1b2, l3, l3b, input, output = generateExample3()
+        example3()
+        
+        
+        
+        
         
         
     elif (sys.argv[2]=='example'):
@@ -507,10 +749,10 @@ if __name__=="__main__":
         y=np.array([[0.01, 0.99]])
 
         # params: self, numOfLayers, numOfNeurons, inputSize, activation, loss, lr, weights=None
-        #example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]), w)
+        example_network = NeuralNetwork(2, np.array([2, 2]), 2, ["logistic", "logistic"], "square error", float(sys.argv[1]), w)
         
         # example code to show the netwrok can scale
-        example_network = NeuralNetwork(3, np.array([10,10, 2]), 2, ["logistic", "logistic", "logistic"], "square error", float(sys.argv[1]))
+        #example_network = NeuralNetwork(3, np.array([10,10, 2]), 2, ["logistic", "logistic", "logistic"], "square error", float(sys.argv[1]))
         
         #extra
         losses = []
