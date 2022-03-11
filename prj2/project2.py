@@ -283,14 +283,35 @@ class ConvolutionalLayer:
 
 class FlattenLayer:
     # restricted to 2D convolutions , square kernels, stride = 1, padding = 'valid'
-    def __init__(self, inputSize):
-        #only needs to intialize with the input size
-        self.inputSize = inputSize
+    def __init__(self, input):
+        #only needs to intialize with the input
+        self.input = input
+        self.FL_out = None
+        self.unflat = None
 
-    # def calculate(self, input_):
-    #
-    # def calculatewdeltas(self, sum_wtimesdelta):
-    #     # wtimesdelta is a 2D matrix from the previous layer
+    def calculate(self, input):
+        self.FL_out = input.flatten()
+        self.FL_out = np.reshape(self.FL_out, (len(self.FL_out), 1))
+        return self.FL_out
+
+    def calculatewdeltas(self, FL_out):
+        # wtimesdelta is a 2D matrix from the previous layer
+        re_flat = np.reshape(self.FL_out, (len(self.FL_out),))
+        self.unflat = re_flat.reshape(self.input.shape)
+
+        return self.unflat
+
+# class MaxPoolingLayer:
+#     def __init__(self, kernal, inputDim):
+#         self.kernal = kernal
+#         self.inputDim = inputDim
+#         self.mask = None
+#     def calculate(self, input):
+#
+#
+#     def calculatewdeltas(self, FL_out):
+#         # wtimesdelta is a 2D matrix from the previous layer
+
 
 
 
@@ -450,7 +471,31 @@ class NeuralNetwork:
 
 if __name__ == "__main__":
     if (len(sys.argv) < 3):
-        print('a good place to test different parts of your code')
+        # input = np.array([[[1, 2, 3],
+        #                     [4, 5, 6],
+        #                     [7, 8, 9]],
+        #                     [[-1, -2, -3],
+        #                     [-5, -6, -7],
+        #                     [-9, -10, -11]]])
+
+        ###### Test code for flatten layer ###########
+        input = np.array([[[1, 2, 3, 4],
+                                   [5, 6, 7, 8],
+                                   [9, 10, 11, 12],
+                                   [13, 14, 15, 16]],
+                                   [[-1, -2, -3, -4],
+                                   [-5, -6, -7, -8],
+                                   [-9, -10, -11, -12],
+                                   [-13, -14, -15, -16]]])
+        print(input)
+        FL = FlattenLayer(input)
+        output = FL.calculate(input)
+        print(output)
+
+        unflattten = FL.calculatewdeltas(output)
+        print(unflattten )
+        ###### Test code for flatten layer ###########
+
 
     elif (sys.argv[2] == 'example1'):
         from tensorflowtest_example1 import example1
