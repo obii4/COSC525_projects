@@ -518,15 +518,290 @@ class NeuralNetwork:
 
 
 
-# To run the code specify the example to be run
-# for example: example1
-#          or: example2
-#          or: example3
+# To run the code specify three arguments: learning_rate demonstration_name number_of_epochs
+# for example: 0.5 example 1000
+#          or: 1 and 1000
+#          or: 0.1 xor 1000
+
 
 if __name__=="__main__":
     # Testing Code
     
-    if (sys.argv[1] == 'example1'):
+    if (sys.argv[2] == 'maxpool_test'):
+        input_ = np.array([[[1, 2, 3, 4, 5, 6],
+                           [7, 8, 9, 10, 11, 12],
+                           [13, 14, 15, 16, 17, 18],
+                           [19, 20, 21, 22, 23, 24],
+                           [25, 26, 27, 28, 29, 30],
+                           [31, 32, 33, 34, 35, 36]],
+                          [[11, 12, 13, 14, 15, 16],
+                           [17, 18, 19, 110, 111, 112],
+                           [113, 114, 115, 116, 117, 118],
+                           [119, 120, 121, 122, 123, 124],
+                           [125, 126, 127, 128, 129, 130],
+                           [131, 132, 133, 134, 135, 1036]]])
+        
+    
+        MP = MaxPoolingLayer(2, np.array([2, 6, 6]))
+        t = MP.calculate(input_)
+        print(t)
+        
+        
+        wtimesdelta_test = np.array([[[-1, -2, -3],
+                                [-4, -5, -6],
+                                [-7, -8, -9]],
+                               [[-10, -11, -12],
+                                [-13, -14, -15],
+                                [-16, -17, -18]]])
+        
+        
+        s = MP.calcwdeltas(wtimesdelta_test)
+        print(s)
+    
+    
+    
+    elif (sys.argv[2] == 'full_test'):
+    
+        num_epochs = 1
+    
+        # self, inputSize, loss, lr
+        example2_NN = NeuralNetwork((1, 7, 7), "square error", 100.0)
+    
+        input_ = np.array([[[1, 1, 1, 1, 1, 1, 1],
+                            [1, 1, 1, 1, 1, 1, 1],
+                            [1, 1, 1, 1, 1, 1, 1],
+                            [1, 1, 1, 1, 1, 1, 1],
+                            [1, 1, 1, 1, 1, 1, 1],
+                            [1, 1, 1, 1, 1, 1, 1],
+                            [1, 1, 1, 1, 1, 1, 1]]])
+        output = np.array([0.5])
+        synthetic_weights1 = np.array([[[[0, 0, 0],
+                                         [1, 1, 1],
+                                         [0, 0, 0]]],
+                                       [[[0, 0, 0],
+                                         [0, 0, 0],
+                                         [2, 2, 2]]]])
+        synthetic_bias1 = np.array([[1], [1]])
+        synthetic_weights2 = np.array([[[[0, 0, 1],
+                                         [0, 0, 0],
+                                         [0, 0, 0]],
+                                        [[0, 0, 1],
+                                         [0, 0, 0],
+                                         [0, 0, 0]]]])
+        synthetic_bias2 = np.array([[1]])
+        synthetic_params = np.array([[0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02]])
+
+        # Check shapes of all synthetic data
+        print(f"layer 1 weights: {synthetic_weights1}")
+        print(f"layer 1 weights shape: {synthetic_weights1.shape}")
+        print(f"layer 1 bias: {synthetic_bias1}")
+        print(f"layer 1 bias shape: {synthetic_bias1.shape}")
+        print(f"layer 2 weights: {synthetic_weights2}")
+        print(f"layer 2 weights shape: {synthetic_weights2.shape}")
+        print(f"layer 2 bias: {synthetic_bias2}")
+        print(f"layer 2 bias shape: {synthetic_bias2.shape}")
+        print(f"layer 3 params: {synthetic_params}")
+        print(f"layer 3 params shape: {synthetic_params.shape}")
+        print(f"output: {output}")
+        print(f"output shape: {output.shape}")
+        print(f"input: {input_}")
+        print(f"input shape: {input_.shape}")
+        
+        
+        # self, layerType, activation, numOfNeurons=None, numKernels=None, kernelSize=None, weights=None
+        example2_NN.addLayer("CL", activation="logistic", numKernels=2, kernelSize=3, weights=synthetic_weights1, biases=synthetic_bias1)
+        example2_NN.addLayer("CL", activation="logistic", numKernels=1, kernelSize=3, weights=synthetic_weights2, biases=synthetic_bias2)
+        example2_NN.addLayer("FL")
+        example2_NN.addLayer("FCL", "logistic", numOfNeurons=1, weights=synthetic_params)
+    
+        # Train the network, each epoch goes through all of the datapoints
+        for i in range(num_epochs):
+        
+            for i in range(len(output)):
+                # Train the network for 1 datapoint
+                network_output = example2_NN.train(input_, output)
+                
+            # Append the loss from the epoch
+            #losses.append(example_network.calculateloss(yp.T, y))
+    
+        # Printing the weights going Layers left to right & Neurons top to bottom
+        for i, lays in enumerate(example2_NN.layers):
+
+            # Print neuron weights depending on the type of layer they are in            
+            if lays.id == "CL":
+            
+                for j in range(lays.numKernels):
+                    # print weights of 1 neuron from a kernel channel
+                    print()
+                    print(f"Convolutional Layer {i}, Kernel {j} Weights")
+                    print(np.reshape(lays.neurons[j, 0, 0].weights[:-1], (lays.inputDim[0], lays.kernelSize, lays.kernelSize)))
+                    print()
+                    print(f"Convolutional Layer {i}, Kernel {j} Bias")
+                    print(lays.neurons[j, 0, 0].weights[-1])
+                    print()
+            elif lays.id == "FCL":
+            
+                for j in range(len(lays.neurons)):
+                    print()
+                    print(f"Fully Connected Layer {i} Neuron {j} Weights")
+                    print(lays.neurons[j].weights[:-1])
+                    print()
+                    print(f"Fully Connected Layer {i} Neuron {j} Bias")
+                    print(lays.neurons[j].weights[-1])
+            else:
+                pass
+        print(f"Network output: {network_output}")
+        print("finished")
+
+     
+    elif (sys.argv[2] == 'flatten_test'):
+        ###### Test code for flatten layer ###########
+        input = np.array([[[1, 2, 3, 4],
+                                   [5, 6, 7, 8],
+                                   [9, 10, 11, 12],
+                                   [13, 14, 15, 16]],
+                                   [[-1, -2, -3, -4],
+                                   [-5, -6, -7, -8],
+                                   [-9, -10, -11, -12],
+                                   [-13, -14, -15, -16]]])
+
+        print(input)
+        FL = FlattenLayer()
+        output = FL.calculate(input)
+        print(output)
+
+        unflattten = FL.calcwdeltas(output)
+
+        print(unflattten)
+        
+    elif (len(sys.argv)<3):
+        
+        # args: inputSize, loss, lr (check if NeuralNetwork class works after changing config --check)
+        example_network = NeuralNetwork(10, "square error", float(sys.argv[1]))
+        
+        # layerType, numOfNeurons, activation, weights=None (check if addLayer is working for FCL case --check)
+        example_network.addLayer("FCL", 5, "logistic")
+        
+        
+        # Check if addLayer method is initializing weights correctly when none are given for FCL case --check
+        for i, lays in enumerate(example_network.layers):
+            for j, neurs in enumerate(lays.neurons):
+                #print(f"Layer {i + 1} Neuron {j + 1} ")
+                #print(lays.neurons[j].weights[:])
+                pass
+        
+        # Check if update to inputSize is working within the NN class for FCL case --check
+        example_network.addLayer("FCL", 5, "logistic")
+        
+        for i, lays in enumerate(example_network.layers):
+            for j, neurs in enumerate(lays.neurons):
+                #print(f"Layer {i + 1} Neuron {j + 1} ")
+                #print(lays.neurons[j].weights[:])
+                pass
+
+        # Check if ConvolutionalLayer class is creating weights correctly
+        # numKernels, kernelSize, activation, inputDim, lr, weights=None
+        #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([3, 5, 5]), 0.01)   # example in notes
+        #conv_lay = ConvolutionalLayer(2, 2, "logistic", np.array([2, 4, 4]), 1) 
+        
+        # config 2
+        synthetic_weights = np.array([[[[1, 1],
+                                       [1, 1]],
+                                       [[1, 1],
+                                        [1, 1]]]])
+        
+        
+        
+        #config 1
+        #conv_lay = ConvolutionalLayer(2, 3, "logistic", np.array([2, 5, 5]), 1)
+        #config 2
+        conv_lay = ConvolutionalLayer(1, 2, "logistic", np.array([2, 5, 5]), 1, synthetic_weights) 
+        
+        
+        # Check if input_ is reshaped correctly in CL calculate method
+        CL_test_input = np.array([[[1, 2, 3, 4], 
+                                   [5, 6, 7, 8], 
+                                   [9, 10, 11, 12], 
+                                   [13, 14, 15, 16]],
+                                  [[-1, -2, -3, -4],
+                                   [-5, -6, -7, -8],
+                                   [-9, -10, -11, -12],
+                                   [-13, -14, -15, -16]]])
+        CL_test_input2 = np.array([[[1, 2, 3, 4, 4], 
+                                   [5, 6, 7, 8, 8], 
+                                   [9, 10, 11, 12, 12], 
+                                   [13, 14, 15, 16, 16],
+                                   [17, 18, 19, 20, 20]],
+                                  [[-1, -2, -3, -4, 4],
+                                   [-5, -6, -7, -8, -8],
+                                   [-9, -10, -11, -12, -12],
+                                   [-13, -14, -15, -16, -16],
+                                   [-17, -18, -19, -20, -20]]])
+        
+        
+        
+        
+        
+        
+        #print(f" test input size: {CL_test_input.shape}")
+        
+        #output = conv_lay.calculate(CL_test_input)
+        output = conv_lay.calculate(CL_test_input2)
+        print(conv_lay.output_shape)
+        
+        # check calculatewdeltas 
+        
+        
+        #config 1
+#         synthetic_wtimesdelta = np.array([[[1, 1, 1],
+#                                  [1, 1, 1],
+#                                  [1, 1, 1]],
+#                                 [[2, 2, 2],
+#                                  [2, 2, 2],
+#                                  [2, 2, 2]]])
+# =============================================================================
+        # config 2
+        synthetic_wtimesdelta = np.array([[[1, 1, 1, 1],
+                                  [1, 1, 1, 1],
+                                  [1, 1, 1, 1],
+                                  [1, 1, 1, 1]],
+                                 [[2, 2, 2, 2],
+                                  [2, 2, 2, 2],
+                                  [2, 2, 2, 2],
+                                  [2, 2, 2, 2]]])
+        print(f" synthetic_wtimesdelta shape: {synthetic_wtimesdelta.shape}")
+        
+        next_wtimesdelta = conv_lay.calculatewdeltas(synthetic_wtimesdelta)
+        #print(f" Calculated partials from function: {}")
+        print(f" inputs: {conv_lay.input}")
+        
+        # Shape of partial derivatives should be the same as the weights-> print both
+        print(f"weights: {conv_lay.weights}")
+        print(f"previous layer's wtimesdelta': {next_wtimesdelta}")
+        
+        ###### Test code for flatten layer ###########
+        input = np.array([[[1, 2, 3, 4],
+                                   [5, 6, 7, 8],
+                                   [9, 10, 11, 12],
+                                   [13, 14, 15, 16]],
+                                   [[-1, -2, -3, -4],
+                                   [-5, -6, -7, -8],
+                                   [-9, -10, -11, -12],
+                                   [-13, -14, -15, -16]]])
+
+        print(input)
+        FL = FlattenLayer(input)
+        output = FL.calculate(input)
+        print(output)
+
+        unflattten = FL.calculatewdeltas(output)
+
+        print(unflattten)
+
+
+
+
+    elif (sys.argv[2] == 'example1'):
         from tensorflowtest_example1 import example1
         from parameters import generateExample1
         
@@ -542,6 +817,18 @@ if __name__=="__main__":
         l1b1 = l1b1.reshape(1,1)
         input_ = input_.reshape((1, 5, 5))
         l2_params = np.concatenate((l2, l2b.reshape(1,1)), axis=1)
+        
+        # Check shapes of generated values
+        print(f"layer 1 weights: {np.array([[l1k1]])}")
+        print(f"layer 1 weights shape: {np.array([[l1k1]]).shape}")
+        print(f"layer 1 bias: {l1b1}")
+        print(f"layer 1 bias shape: {l1b1.shape}")
+        print(f"layer 2 params: {l2_params}")
+        print(f"layer 2 params shape: {l2_params.shape}")
+        print(f"output: {output}")
+        print(f"output shape: {output.shape}")
+        print(f"input: {input_}")
+        print(f"input shape: {input_.shape}")
         
         
         ################# Construct Network and Run ###########################
@@ -561,7 +848,7 @@ if __name__=="__main__":
             
             
         ################# Print Results#######################################
-        print("##################CUSTOM NETWORK RESULTS######################")
+        
         
         print(f"Network output: {network_output}")
         
@@ -593,10 +880,9 @@ if __name__=="__main__":
                 pass
         
         # TensorFlow Results
-        print("####################TENSORFLOW RESULTS#########################")
         example1()
 
-    elif (sys.argv[1] == 'example2'):
+    elif (sys.argv[2] == 'example2'):
         from tensorflowtest_example2 import example2
         from parameters import generateExample2
         
@@ -612,6 +898,22 @@ if __name__=="__main__":
         input_ = input_.reshape((1, 7, 7))
         l3_params = np.concatenate((l3, l3b.reshape(1,1)), axis=1)
         l2b = l2b.reshape(1,1)
+        
+        # Check shapes of generated values
+        print(f"layer 1 weights: {np.array([[l1k1], [l1k2]])}")
+        print(f"layer 1 weights shape: {np.array([[l1k1], [l1k2]]).shape}")
+        print(f"layer 1 bias: {np.array([l1b1, l1b2])}")
+        print(f"layer 1 bias shape: {np.array([l1b1, l1b2]).shape}")
+        print(f"layer 2 weights: {np.array([[l2c1, l2c2]])}")
+        print(f"layer 2 weights shape: {np.array([[l2c1, l2c2]]).shape}")
+        print(f"layer 2 bias: {l2b}")
+        print(f"layer 2 bias shape: {l2b.shape}")
+        print(f"layer 3 params: {l3_params}")
+        print(f"layer 3 params shape: {l3_params.shape}")
+        print(f"output: {output}")
+        print(f"output shape: {output.shape}")
+        print(f"input: {input_}")
+        print(f"input shape: {input_.shape}")
         
         
         ################# Construct Network and Run ###########################
@@ -633,7 +935,7 @@ if __name__=="__main__":
             
         ################# Print Results#######################################
         
-        print("##################CUSTOM NETWORK RESULTS######################")
+        
         print(f"Network output: {network_output}")
         
         # Printing the weights going Layers left to right & Neurons top to bottom
@@ -664,10 +966,9 @@ if __name__=="__main__":
                 pass
 
         # TensorFlow Results
-        print("####################TENSORFLOW RESULTS#########################")
         example2()
 
-    elif (sys.argv[1] == 'example3'):
+    elif (sys.argv[2] == 'example3'):
         from tensorflowtest_example3 import example3
         from parameters import generateExample3
 
@@ -682,6 +983,18 @@ if __name__=="__main__":
         # reshape some generated values
         input_ = input_.reshape((1, 8, 8))
         l3_params = np.concatenate((l3, l3b.reshape(1,1)), axis=1)
+        
+        # Check shapes of generated values
+        print(f"layer 1 weights: {np.array([[l1k1], [l1k2]])}")
+        print(f"layer 1 weights shape: {np.array([[l1k1], [l1k2]]).shape}")
+        print(f"layer 1 bias: {np.array([l1b1, l1b2])}")
+        print(f"layer 1 bias shape: {np.array([l1b1, l1b2]).shape}")
+        print(f"layer 3 params: {l3_params}")
+        print(f"layer 3 params shape: {l3_params.shape}")
+        print(f"output: {output}")
+        print(f"output shape: {output.shape}")
+        print(f"input: {input_}")
+        print(f"input shape: {input_.shape}")
         
         
         ################# Construct Network and Run ###########################
@@ -702,7 +1015,7 @@ if __name__=="__main__":
         
         
         ################# Print Results#######################################
-        print("##################CUSTOM NETWORK RESULTS######################")
+        
         
         print(f"Network output: {network_output}")
         
@@ -734,6 +1047,5 @@ if __name__=="__main__":
                 pass
  
         # TensorFlow Results
-        print("####################TENSORFLOW RESULTS#########################")
         example3()
         
