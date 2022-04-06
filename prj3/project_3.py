@@ -152,11 +152,11 @@ if __name__ == "__main__":
     # Check the shape of everything
     print(f'Xtrain is of shape: {Xtrain.shape}')
     print(f'Ytrain is of shape: {Ytrain.shape}')
-    print(f'Ytrain has {Ytrain[1].shape} features....')
+    #print(f'Ytrain has {Ytrain[1].shape} features....')
 
     print(f'Xval is of shape: {Xval.shape}')
     print(f'Yval is of shape: {Yval.shape}')
-    print(f'Yval has {Yval[1].shape} features....')
+    #print(f'Yval has {Yval[1].shape} features....')
 
 
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     model.add(Dense(1024, input_shape=(1024,), activation="tanh"))
     model.add(Dense(512, activation="sigmoid"))
     model.add(Dense(100, activation="relu"))
-    model.add(Dense(11, activation="softmax"))
+    model.add(Dense(9, activation="softmax"))
     model.summary()
 
     # train the model using SGD
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     model.compile(loss="categorical_crossentropy", optimizer=sgd,
                   metrics=["accuracy"])
     H = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
-                  epochs=100, batch_size=128)
+                  epochs=100, batch_size=640)
 
 
 
