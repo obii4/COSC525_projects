@@ -4,16 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4d2c633d-a6a8-4639-a3d0-355ed387af86" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj3/fairface_label_train.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj3/fairface_label_train_gender.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj3/fairface_label_train_slim.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj3/fairface_label_val.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj3/fairface_label_val_gender.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj3/fairface_label_val_slim.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/prj3/project_3.py" beforeDir="false" afterPath="$PROJECT_DIR$/prj3/project_3.py" afterDir="false" />
-    </list>
+    <list default="true" id="4d2c633d-a6a8-4639-a3d0-355ed387af86" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,6 +28,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/prj2" />
@@ -57,5 +49,8 @@
       <updated>1644349338064</updated>
     </task>
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
 </project>

@@ -191,45 +191,46 @@ def acc_loss_plotting(mod):
 
 if __name__ == "__main__":
     # # Testing Code
-    #
-    # # Load images
-    # train_set = ImageLoader(file_names_train, image_train_path)
-    # val_set = ImageLoader(file_names_val, image_val_path)
-    # Xtrain = train_set.load_data()
-    # Xval = val_set.load_data()
-    #
-    # # Load and encode labels
-    # Ytrain, Yval = label_encoder(label_train_path, label_val_path)
-    #
-    # # Check the shape of everything
-    # print(f'Xtrain is of shape: {Xtrain.shape}')
-    # print(f'Ytrain is of shape: {Ytrain.shape}')
-    # print(f'Ytrain has {Ytrain.shape[1]} features....')
-    #
-    # print(f'Xval is of shape: {Xval.shape}')
-    # print(f'Yval is of shape: {Yval.shape}')
-    # print(f'Yval has {Ytrain.shape[1]} features....')
-    #
-    #
-    #
-    # #### random test network ####
-    # print("Initializing network...")
-    # model = Sequential()
-    # model.add(Dense(1024, input_shape=(1024,), activation="tanh"))
-    # model.add(Dense(512, activation="sigmoid"))
-    # model.add(Dense(100, activation="relu"))
-    # model.add(Dense(Yval.shape[1], activation="softmax"))
-    # model.summary()
-    #
-    #
-    # # train the model using ADAM
-    # opt = tf.keras.optimizers.Adam(learning_rate=0.001) #SGD(0.00001) #0.0000001
-    # model.compile(loss="categorical_crossentropy", optimizer=opt,
-    #             metrics=["accuracy"])
-    # H = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
-    #               epochs=10, batch_size=640) #callbacks=[model_checkpoint_callback]
-    #
-    # acc_loss_plotting(H)
+    if (sys.argv[1] == 'test'):
+        print('ok')
+        # Load images
+        train_set = ImageLoader(file_names_train, image_train_path)
+        val_set = ImageLoader(file_names_val, image_val_path)
+        Xtrain = train_set.load_data()
+        Xval = val_set.load_data()
+
+        # Load and encode labels
+        Ytrain, Yval = label_encoder(label_train_path, label_val_path)
+
+        # Check the shape of everything
+        print(f'Xtrain is of shape: {Xtrain.shape}')
+        print(f'Ytrain is of shape: {Ytrain.shape}')
+        print(f'Ytrain has {Ytrain.shape[1]} features....')
+
+        print(f'Xval is of shape: {Xval.shape}')
+        print(f'Yval is of shape: {Yval.shape}')
+        print(f'Yval has {Ytrain.shape[1]} features....')
+
+
+
+        #### random test network ####
+        print("Initializing network...")
+        model = Sequential()
+        model.add(Dense(1024, input_shape=(1024,), activation="tanh"))
+        model.add(Dense(512, activation="sigmoid"))
+        model.add(Dense(100, activation="relu"))
+        model.add(Dense(Yval.shape[1], activation="softmax"))
+        model.summary()
+
+
+        # train the model using ADAM
+        opt = tf.keras.optimizers.Adam(learning_rate=0.001) #SGD(0.00001) #0.0000001
+        model.compile(loss="categorical_crossentropy", optimizer=opt,
+                    metrics=["accuracy"])
+        H = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
+                      epochs=10, batch_size=640) #callbacks=[model_checkpoint_callback]
+
+        acc_loss_plotting(H)
 
 
 
@@ -241,7 +242,7 @@ if __name__ == "__main__":
     # plt.imshow(tt[0], cmap='gray');
     # plt.show()
 
-    if (sys.argv[1] == 'task1'):
+    elif (sys.argv[1] == 'task1'):
         train_set = ImageLoader(file_names_train, image_train_path)
         val_set = ImageLoader(file_names_val, image_val_path)
         Xtrain = train_set.load_data()
