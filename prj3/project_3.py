@@ -20,21 +20,25 @@ from tensorflow.keras.optimizers import SGD
 # define path to images and label files, the _slim.csv
 # file only contains the features of interest
 image_train_path = '/Users/chrisobrien/Desktop/p3/train/'
-label_train_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/fairface_label_train_gender.csv'
+gender_label_train_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_train_gender.csv'
+race_label_train_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_train_race.csv'
 
 image_val_path = '/Users/chrisobrien/Desktop/p3/val/'
-label_val_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/fairface_label_val_gender.csv'
+gender_label_val_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_val_gender.csv'
+race_label_val_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_val_race.csv'
+
+
 
 
 # load all of file names to a variable
 # sort in numerical order so that it matches the label file order ie 0, 1, 2, etc
 file_names_train = [os.path.basename(f) for f in glob.glob(image_train_path+'*.jpg')]
 file_names_train.sort(key=lambda var:[int(x) if x.isdigit() else x for x in re.findall(r'[^0-9]|[0-9]+', var)])
-#file_names_train = file_names_train[0:10000]
+#file_names_train = file_names_train[0:10000] #uncomment if you want to debug with subset
 
 file_names_val = [os.path.basename(f) for f in glob.glob(image_val_path+'*.jpg')]
 file_names_val.sort(key=lambda var:[int(x) if x.isdigit() else x for x in re.findall(r'[^0-9]|[0-9]+', var)])
-#file_names_val = file_names_val[0:1000]
+#file_names_val = file_names_val[0:1000] #uncomment if you want to debug with subset
 
 
 
@@ -50,19 +54,22 @@ def label_encoder(path, path2):
     out1 -> encoded train labels
     out2 -> encoded val labels
     '''
+
+    #train label load
     with open(path, 'r') as f:
         load = csv.reader(f, delimiter=',')
-        next(load)
+        next(load) # skips header
         text = [text for text in load]
     data_array = np.asarray(text)
-    #data_array = data_array[0:10000]
+    #data_array = data_array[0:10000] #uncomment if you want to debug with subset
 
+    # val label load
     with open(path2, 'r') as f:
         load = csv.reader(f, delimiter=',')
-        next(load)
+        next(load) # skips header
         text = [text for text in load]
     data_array2 = np.asarray(text)
-    #data_array2 = data_array2[0:1000]
+    #data_array2 = data_array2[0:1000] #uncomment if you want to debug with subset
 
     oHenc = OneHotEncoder()
     oHenc.fit(data_array)
@@ -71,8 +78,8 @@ def label_encoder(path, path2):
     val_lab = oHenc.transform(data_array2).toarray()
 
     #convert each label to array
-    out1 = np.array([np.array(xi) for xi in train_lab])
-    out2 = np.array([np.array(xi) for xi in val_lab])
+    out1 = np.array([np.array(xi) for xi in train_lab]) #train labels encoded
+    out2 = np.array([np.array(xi) for xi in val_lab]) #val labels encoded
 
     return out1, out2
 
@@ -124,77 +131,106 @@ class ImageLoader:
         images_all_out = np.asarray(images_all) #each element of the array is (1024,)
 
         if 'train' in self.image_path:
-            print(f'Loaded {len(self.file_names)} images w/ labels for the training set!')
+            print(f'Loaded {len(self.file_names)} images for the training set!')
         else:
-            print(f'Loaded {len(self.file_names)} images w/ labels for the validation set!')
+            print(f'Loaded {len(self.file_names)} images for the validation set!')
 
 
         return images_all_out
 
+def task1_model(Xtrain, Ytrain, Xval, Yval):
 
-if __name__ == "__main__":
-    # Testing Code
+    '''
+    Used for the completion of task 1
+    '''
 
-    # Load images
-    train_set = ImageLoader(file_names_train, image_train_path)
-    val_set = ImageLoader(file_names_val, image_val_path)
-    Xtrain = train_set.load_data()
-    Xval = val_set.load_data()
-
-    # Load and encode labels
-    Ytrain, Yval = label_encoder(label_train_path, label_val_path)
-
-    print(Yval.shape[1])
-    # Check the shape of everything
-    print(f'Xtrain is of shape: {Xtrain.shape}')
-    print(f'Ytrain is of shape: {Ytrain.shape}')
-    print(f'Ytrain has {Ytrain.shape[1]} features....')
-
-    print(f'Xval is of shape: {Xval.shape}')
-    print(f'Yval is of shape: {Yval.shape}')
-    print(f'Yval has {Ytrain.shape[1]} features....')
-
-
-
-    #### random test network ####
     print("Initializing network...")
     model = Sequential()
     model.add(Dense(1024, input_shape=(1024,), activation="tanh"))
     model.add(Dense(512, activation="sigmoid"))
     model.add(Dense(100, activation="relu"))
     model.add(Dense(Yval.shape[1], activation="softmax"))
-    model.summary()
 
-    #confusion = tf.confusion_matrix(labels=model_, predictions=model, num_classes=num_classes)
+    #model.summary()
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=15)
+    opt = tf.keras.optimizers.Adam(learning_rate=0.001) #SGD(0.00001) #0.0000001
+    model.compile(loss="categorical_crossentropy", optimizer=opt,
+                metrics=["accuracy"])
+    model_out = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
+                  epochs=150, batch_size=640, callbacks=[early_stopping])
 
-    # model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    #     filepath='/Users/chrisobrien/Desktop/cp.cpkt',
-    #     save_weights_only=True,
-    #     monitor='val_accuracy',
-    #     mode='max',
-    #     save_best_only=True)
-
-    # train the model using SGD
-    sgd = SGD(0.00001) #0.0000001
-    model.compile(loss="categorical_crossentropy", optimizer=sgd,
-                metrics=[tf.keras.metrics.CategoricalAccuracy()])
-    H = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
-                  epochs=1000, batch_size=640) #callbacks=[model_checkpoint_callback]
-
-    print("[INFO] evaluating network...")
-    predictions = model.predict(Xval, batch_size=640)
-    #print(predictions.shape[1])
-    #print(predictions)
+    return model_out
 
 
-    preds = (predictions > 0.5)#.long()
-    #print(preds)
+
+def acc_loss_plotting(mod):
+    '''
+    Takes a trained model and summarizes training through
+    plotting:
+        1. Accuracy vs Epoch
+        2. Loss vs Epoch
+    '''
+    plt.figure()
+    plt.plot(mod.history['accuracy'])
+    plt.plot(mod.history['val_accuracy'])
+    #plt.title('Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'])
+    plt.show()
+
+    plt.figure()
+    plt.plot(mod.history['loss'])
+    plt.plot(mod.history['val_loss'])
+    #plt.title('Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'])
+    plt.show()
 
 
+if __name__ == "__main__":
+    # # Testing Code
     #
-    # u = tf.stack([Yval, predictions], axis=1)
-    # print(u)
-    #print(classification_report(Yval, predictions))
+    # # Load images
+    # train_set = ImageLoader(file_names_train, image_train_path)
+    # val_set = ImageLoader(file_names_val, image_val_path)
+    # Xtrain = train_set.load_data()
+    # Xval = val_set.load_data()
+    #
+    # # Load and encode labels
+    # Ytrain, Yval = label_encoder(label_train_path, label_val_path)
+    #
+    # # Check the shape of everything
+    # print(f'Xtrain is of shape: {Xtrain.shape}')
+    # print(f'Ytrain is of shape: {Ytrain.shape}')
+    # print(f'Ytrain has {Ytrain.shape[1]} features....')
+    #
+    # print(f'Xval is of shape: {Xval.shape}')
+    # print(f'Yval is of shape: {Yval.shape}')
+    # print(f'Yval has {Ytrain.shape[1]} features....')
+    #
+    #
+    #
+    # #### random test network ####
+    # print("Initializing network...")
+    # model = Sequential()
+    # model.add(Dense(1024, input_shape=(1024,), activation="tanh"))
+    # model.add(Dense(512, activation="sigmoid"))
+    # model.add(Dense(100, activation="relu"))
+    # model.add(Dense(Yval.shape[1], activation="softmax"))
+    # model.summary()
+    #
+    #
+    # # train the model using ADAM
+    # opt = tf.keras.optimizers.Adam(learning_rate=0.001) #SGD(0.00001) #0.0000001
+    # model.compile(loss="categorical_crossentropy", optimizer=opt,
+    #             metrics=["accuracy"])
+    # H = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
+    #               epochs=10, batch_size=640) #callbacks=[model_checkpoint_callback]
+    #
+    # acc_loss_plotting(H)
+
 
 
 
@@ -205,7 +241,26 @@ if __name__ == "__main__":
     # plt.imshow(tt[0], cmap='gray');
     # plt.show()
 
-    # if (sys.argv[0] == 'task1'):
+    if (sys.argv[1] == 'task1'):
+        train_set = ImageLoader(file_names_train, image_train_path)
+        val_set = ImageLoader(file_names_val, image_val_path)
+        Xtrain = train_set.load_data()
+        Xval = val_set.load_data()
+
+        Ytrain_gender, Yval_gender = label_encoder(gender_label_train_path, gender_label_val_path)
+        #Ytrain_race, Yval_race = label_encoder(race_label_train_path, race_label_val_path)
+
+        gen = task1_model(Xtrain, Ytrain_gender, Xval, Yval_gender)
+        #rac = task1_model(Xtrain, Ytrain_race, Xval, Yval_race)
+
+        #acc_loss_plotting(rac)
+        acc_loss_plotting(gen)
+
+
+
+
+
+
     # elif (sys.argv[0] == 'task2'):
     # elif (sys.argv[0] == 'task4'):
     # elif (sys.argv[0] == 'task5'):
