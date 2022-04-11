@@ -6,12 +6,23 @@
   <component name="ChangeListManager">
     <list default="true" id="4d2c633d-a6a8-4639-a3d0-355ed387af86" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prj3/labels/fairface_label_train_age.csv" beforeDir="false" afterPath="$PROJECT_DIR$/prj3/labels/fairface_label_train_age.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prj3/labels/fairface_label_train_slim.csv" beforeDir="false" afterPath="$PROJECT_DIR$/prj3/labels/fairface_label_train_slim.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prj3/labels/fairface_label_val_age.csv" beforeDir="false" afterPath="$PROJECT_DIR$/prj3/labels/fairface_label_val_age.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prj3/labels/fairface_label_val_slim.csv" beforeDir="false" afterPath="$PROJECT_DIR$/prj3/labels/fairface_label_val_slim.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/prj3/project_3.py" beforeDir="false" afterPath="$PROJECT_DIR$/prj3/project_3.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />

@@ -1,6 +1,7 @@
 import os, sys, glob, csv, re
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sn #for heatmaps
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import classification_report
@@ -12,8 +13,10 @@ from tqdm import tqdm
 from PIL import Image
 
 import tensorflow as tf
+from tensorflow.math import confusion_matrix
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPool2D, Flatten
+
 
 
 # define path to images and label files, the _slim.csv
@@ -22,11 +25,13 @@ image_train_path = '/Users/chrisobrien/Desktop/p3/train/'
 gender_label_train_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_train_gender.csv'
 race_label_train_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_train_race.csv'
 age_label_train_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_train_age.csv'
+all_label_train_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_train_slim.csv'
 
 image_val_path = '/Users/chrisobrien/Desktop/p3/val/'
 gender_label_val_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_val_gender.csv'
 race_label_val_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_val_race.csv'
 age_label_val_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_val_age.csv'
+all_label_val_path = '/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/labels/fairface_label_val_slim.csv'
 
 
 
@@ -74,7 +79,7 @@ def label_encoder(path, path2):
 
     oHenc = OneHotEncoder()
     oHenc.fit(data_array)
-    # print(enc.categories_) #if you want to view the encoded categories
+    #print(oHenc.categories_) #if you want to view the encoded categories
     train_lab = oHenc.transform(data_array).toarray()
     val_lab = oHenc.transform(data_array2).toarray()
 
@@ -153,6 +158,79 @@ class ImageLoader:
 
         return images_all_out
 
+def acc_loss_plotting(mod):
+    '''
+    Takes a trained model and summarizes training through
+    plotting:
+        1. Accuracy vs Epoch
+        2. Loss vs Epoch
+    '''
+    plt.figure(figsize=(15, 10))
+    plt.plot(mod.history['accuracy'])
+    plt.plot(mod.history['val_accuracy'])
+    plt.title('Race Classification')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'])
+    #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_acc.png')
+    plt.show()
+
+    plt.figure(figsize=(15, 10))
+    plt.plot(mod.history['loss'])
+    plt.plot(mod.history['val_loss'])
+    plt.title('Race Classification')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'])
+    #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_loss.png')
+    plt.show()
+
+def gen_conf_mat(Yval, pred):
+    cm = confusion_matrix(tf.argmax(Yval, axis=1), tf.argmax(pred, axis=1))
+    cm = (cm.numpy()).tolist()
+    plt.figure(figsize = (15,10))
+    ax = sn.heatmap(cm, annot=True, fmt='g')
+    ax.set_xlabel('Predicted labels');
+    ax.set_ylabel('True labels');
+
+    if Yval.shape[1] == 2: #gender
+        ax.set_title('Gender Classifcation Confusion Matrix')
+        ax.xaxis.set_ticklabels(['Female', 'Male']);
+        ax.yaxis.set_ticklabels(['Female', 'Male']);
+
+    elif Yval.shape[1] == 7: #race
+        ax.set_title('Race Classification Confusion Matrix')
+        ax.xaxis.set_ticklabels(['Black', 'East Asian', 'Indian', 'Latino Hispanic',
+       'Middle Eastern', 'Southeast Asian', 'White']);
+        ax.yaxis.set_ticklabels(['Black', 'East Asian', 'Indian', 'Latino Hispanic',
+       'Middle Eastern', 'Southeast Asian', 'White']);
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=30)
+
+    elif Yval.shape[1] == 9: #age
+        ax.set_title('Age Classification Confusion Matrix')
+        ax.xaxis.set_ticklabels(['0-2', '10-19', '20-29', '3-9', '30-39', '40-49', '50-59',
+       '60-69', '70+']);
+        ax.yaxis.set_ticklabels(['0-2', '10-19', '20-29', '3-9', '30-39', '40-49', '50-59',
+       '60-69', '70+']);
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=30)
+
+    # elif Yval.shape[1] == 18: #All
+    #     ax.set_title('ALL Classification Confusion Matrix')
+    #     ax.xaxis.set_ticklabels(['0-2', '10-19', '20-29', '3-9', '30-39', '40-49', '50-59',
+    #    '60-69', '70+', 'Female', 'Male', 'Black', 'East Asian', 'Indian', 'Latino Hispanic',
+    #    'Middle Eastern', 'Southeast Asian', 'White']);
+    #     ax.yaxis.set_ticklabels(['0-2', '10-19', '20-29', '3-9', '30-39', '40-49', '50-59',
+    #    '60-69', '70+', 'Female', 'Male', 'Black', 'East Asian', 'Indian', 'Latino Hispanic',
+    #    'Middle Eastern', 'Southeast Asian', 'White']);
+    #     ax.set_xticklabels(ax.get_xticklabels(), rotation=30)
+    #     ax.set_yticklabels(ax.get_yticklabels(), rotation=30)
+
+    #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_cm.png')
+    plt.show()
+
+
 def task1_model(Xtrain, Ytrain, Xval, Yval):
 
     '''
@@ -172,44 +250,83 @@ def task1_model(Xtrain, Ytrain, Xval, Yval):
     model.compile(loss="categorical_crossentropy", optimizer=opt,
                 metrics=["accuracy"])
     model_out = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
-                  epochs=150, batch_size=640, callbacks=[early_stopping])
+                  epochs=150, batch_size=640, callbacks=[early_stopping]) #150
+
     best_score = max(model_out.history['val_accuracy'])
+
+    predictions = model.predict(Xval)
+
+    gen_conf_mat(Yval, predictions)
+    acc_loss_plotting(model_out)
 
     print(f'Max validation acc {best_score}')
     return model_out
 
+def task2_model(Xtrain, Ytrain, Xval, Yval):
 
-
-def acc_loss_plotting(mod):
     '''
-    Takes a trained model and summarizes training through
-    plotting:
-        1. Accuracy vs Epoch
-        2. Loss vs Epoch
+    Used for the completion of task 2
     '''
-    plt.figure()
-    plt.plot(mod.history['accuracy'])
-    plt.plot(mod.history['val_accuracy'])
-    #plt.title('Accuracy')
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend(['train', 'validation'])
-    plt.show()
 
-    plt.figure()
-    plt.plot(mod.history['loss'])
-    plt.plot(mod.history['val_loss'])
-    #plt.title('Loss')
-    plt.ylabel('Loss')
-    plt.xlabel('Epoch')
-    plt.legend(['train', 'validation'])
-    plt.show()
+    print("Initializing network...")
+    model = Sequential()
+    model.add(
+        Conv2D(40, kernel_size=(5, 5), strides=(1, 1), padding='valid', activation='relu', input_shape=(32, 32, 1)))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Flatten())
+    model.add(Dense(100, activation='relu'))
+    model.add(Dense(Yval.shape[1], activation='softmax'))
+    model.summary()
+    opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
+    # training the model for 10 epochs
+    model_out = model.fit(Xtrain, Ytrain, batch_size=128, epochs=100, validation_data=(Xval, Yval), callbacks=[early_stopping])
 
+    best_score = max(model_out.history['val_accuracy'])
+
+    predictions = model.predict(Xval)
+
+    gen_conf_mat(Yval, predictions)
+    acc_loss_plotting(model_out)
+
+    print(f'Max validation acc {best_score}')
+    return model_out
+
+def task3_model(Xtrain, Ytrain, Xval, Yval):
+    '''
+    Used for the completion of task 3
+    '''
+    model = Sequential()
+    model.add(
+        Conv2D(90, kernel_size=(5, 5), strides=(1, 1), padding='valid', activation='relu', input_shape=(32, 32, 1)))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(
+        Conv2D(80, kernel_size=(5, 5), strides=(1, 1), padding='valid', activation='relu', input_shape=(14, 14, 40)))
+    model.add(MaxPool2D(pool_size=(2, 2)))
+    model.add(Flatten())
+    model.add(Dense(1000, activation='relu'))
+    model.add(Dense(Yval.shape[1], activation='softmax'))
+    #model.summary()
+    opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
+    model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
+    model_out = model.fit(Xtrain, Ytrain, batch_size=128, epochs=100, validation_data=(Xval, Yval),
+                  callbacks=[early_stopping])
+    best_score = max(model_out.history['val_accuracy'])
+
+    predictions = model.predict(Xval)
+
+    gen_conf_mat(Yval, predictions)
+    acc_loss_plotting(model_out)
+
+    print(f'Max validation acc {best_score}')
+    return model_out
 
 if __name__ == "__main__":
     # # Testing Code
     if (sys.argv[1] == 'test'):
-        print('ok')
+        print('ok, working with the test code')
         # Load images
         train_set = ImageLoader(file_names_train, image_train_path)
         val_set = ImageLoader(file_names_val, image_val_path)
@@ -219,7 +336,7 @@ if __name__ == "__main__":
         Xval = val_set.load_data(type)
 
         # Load and encode labels
-        Ytrain, Yval = label_encoder(gender_label_train_path, gender_label_val_path)
+        Ytrain, Yval = label_encoder(race_label_train_path, race_label_val_path)
 
         # Check the shape of everything
         print(f'Xtrain is of shape: {Xtrain.shape}')
@@ -230,57 +347,31 @@ if __name__ == "__main__":
         print(f'Yval is of shape: {Yval.shape}')
         print(f'Yval has {Ytrain.shape[1]} features....')
 
-
-
-        # #### random test network ####
-        # print("Initializing network...")
-        # model = Sequential()
-        # model.add(Dense(1024, input_shape=(1024,), activation="tanh"))
-        # model.add(Dense(512, activation="sigmoid"))
-        # model.add(Dense(100, activation="relu"))
-        # model.add(Dense(Yval.shape[1], activation="softmax"))
-        # model.summary()
-        #
-        #
-        # # train the model using ADAM
-        # opt = tf.keras.optimizers.Adam(learning_rate=0.001) #SGD(0.00001) #0.0000001
-        # model.compile(loss="categorical_crossentropy", optimizer=opt,
-        #             metrics=["accuracy"])
-        # H = model.fit(Xtrain, Ytrain, validation_data=(Xval, Yval),
-        #               epochs=10, batch_size=640) #callbacks=[model_checkpoint_callback]
-        # building a linear stack of layers with the sequential model
-
-        #### random test CNN ####
         model = Sequential()
         # convolutional layer
         model.add(
-            Conv2D(40, kernel_size=(5, 5), strides=(1, 1), padding='valid', activation='relu', input_shape=(32, 32, 1)))
+            Conv2D(90, kernel_size=(5, 5), strides=(1, 1), padding='valid', activation='relu', input_shape=(32, 32, 1)))
         model.add(MaxPool2D(pool_size=(2, 2)))
+        model.add(
+            Conv2D(80, kernel_size=(5, 5), strides=(1, 1), padding='valid', activation='relu', input_shape=(14, 14, 40)))
         # flatten output of conv
+        model.add(MaxPool2D(pool_size=(2, 2)))
         model.add(Flatten())
         # hidden layer
-        model.add(Dense(100, activation='relu'))
-        # output layer
+        model.add(Dense(1000, activation='relu'))
         model.add(Dense(Yval.shape[1], activation='softmax'))
-        # model.summary()
+        model.summary()
         # compiling the sequential model
         opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
-        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
         model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
         # training the model for 10 epochs
-        H = model.fit(Xtrain, Ytrain, batch_size=128, epochs=100, validation_data=(Xval, Yval), callbacks=[early_stopping])
-
+        H = model.fit(Xtrain, Ytrain, batch_size=128, epochs=100, validation_data=(Xval, Yval),
+                      callbacks=[early_stopping])
+        predictions = model.predict(Xval)
+        gen_conf_mat(Yval, predictions)
         acc_loss_plotting(H)
 
-
-
-
-    # Lo = Loader(file_names_train, image_train_path, label_train_path)
-    # test, test2 = Lo.load_data()
-    # print(len(test))
-    # tt = test[0]
-    # plt.imshow(tt[0], cmap='gray');
-    # plt.show()
 
     elif (sys.argv[1] == 'task1'):
         train_set = ImageLoader(file_names_train, image_train_path)
@@ -290,23 +381,46 @@ if __name__ == "__main__":
         Xtrain = train_set.load_data(type)
         Xval = val_set.load_data(type)
 
-        #Ytrain_gender, Yval_gender = label_encoder(gender_label_train_path, gender_label_val_path)
-        #Ytrain_race, Yval_race = label_encoder(race_label_train_path, race_label_val_path)
+        Ytrain_gender, Yval_gender = label_encoder(gender_label_train_path, gender_label_val_path)
+        Ytrain_race, Yval_race = label_encoder(race_label_train_path, race_label_val_path)
         Ytrain_age, Yval_age = label_encoder(age_label_train_path, age_label_val_path)
 
-        #gen = task1_model(Xtrain, Ytrain_gender, Xval, Yval_gender)
-        #rac = task1_model(Xtrain, Ytrain_race, Xval, Yval_race)
+        gen = task1_model(Xtrain, Ytrain_gender, Xval, Yval_gender)
+        rac = task1_model(Xtrain, Ytrain_race, Xval, Yval_race)
         ag = task1_model(Xtrain, Ytrain_age, Xval, Yval_age)
 
-        #acc_loss_plotting(rac)
-        #acc_loss_plotting(gen)
-        acc_loss_plotting(ag)
+    elif (sys.argv[1] == 'task2'):
+        train_set = ImageLoader(file_names_train, image_train_path)
+        val_set = ImageLoader(file_names_val, image_val_path)
 
+        type = 'CNN'
+        Xtrain = train_set.load_data(type)
+        Xval = val_set.load_data(type)
 
+        Ytrain_gender, Yval_gender = label_encoder(gender_label_train_path, gender_label_val_path)
+        Ytrain_race, Yval_race = label_encoder(race_label_train_path, race_label_val_path)
+        Ytrain_age, Yval_age = label_encoder(age_label_train_path, age_label_val_path)
 
+        gen = task2_model(Xtrain, Ytrain_gender, Xval, Yval_gender)
+        rac = task2_model(Xtrain, Ytrain_race, Xval, Yval_race)
+        ag = task2_model(Xtrain, Ytrain_age, Xval, Yval_age)
 
+    elif (sys.argv[1] == 'task3'):
+        train_set = ImageLoader(file_names_train, image_train_path)
+        val_set = ImageLoader(file_names_val, image_val_path)
 
-    # elif (sys.argv[0] == 'task2'):
+        type = 'CNN'
+        Xtrain = train_set.load_data(type)
+        Xval = val_set.load_data(type)
+
+        Ytrain_gender, Yval_gender = label_encoder(gender_label_train_path, gender_label_val_path)
+        Ytrain_race, Yval_race = label_encoder(race_label_train_path, race_label_val_path)
+        Ytrain_age, Yval_age = label_encoder(age_label_train_path, age_label_val_path)
+
+        gen = task3_model(Xtrain, Ytrain_gender, Xval, Yval_gender)
+        rac = task3_model(Xtrain, Ytrain_race, Xval, Yval_race)
+        ag = task3_model(Xtrain, Ytrain_age, Xval, Yval_age)
+
     # elif (sys.argv[0] == 'task4'):
     # elif (sys.argv[0] == 'task5'):
 
