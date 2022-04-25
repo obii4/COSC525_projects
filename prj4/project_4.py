@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, SimpleRNN, MaxPool2D, Flatten, Input, LSTM
 
-
+import sklearn.model_selection as sk
 from tensorflow.keras.utils import to_categorical
 
 class generate:
@@ -108,6 +108,8 @@ def LSTM_model(x, y, hid_state_size):
     '''
     generates lstm network
     '''
+
+    Xtrain, Xval, Ytrain, Yval = sk.train_test_split(x, y, test_size=0.33, random_state=42)
     print("Initializing LSTM network...")
     model = Sequential()
     model.add(LSTM(hid_state_size, input_shape=(x.shape[1], x.shape[2]), return_sequences=True))
@@ -115,8 +117,8 @@ def LSTM_model(x, y, hid_state_size):
     model.summary()
     opt = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=30)
-    model_out = model.fit(x, y, batch_size=1024, epochs=100,
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=30)
+    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=100, validation_data=(Xval, Yval),
                           callbacks=[early_stopping])
     return model_out
 
@@ -124,6 +126,9 @@ def simpleRNN_model(x, y, hid_state_size):
     '''
      simple rnn lstm network
     '''
+
+    Xtrain, Xval, Ytrain, Yval = sk.train_test_split(x, y, test_size=0.33, random_state=42)
+
     print("Initializing simpleRNN network...")
     model = Sequential()
     model.add(SimpleRNN(hid_state_size, input_shape=(x.shape[1], x.shape[2]), return_sequences=True))
@@ -131,8 +136,8 @@ def simpleRNN_model(x, y, hid_state_size):
     model.summary()
     opt = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='accuracy', patience=30)
-    model_out = model.fit(x, y, batch_size=1024, epochs=100,
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 30)
+    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=100, validation_data=(Xval, Yval),
                           callbacks=[early_stopping])
     return model_out
 
@@ -142,14 +147,14 @@ if __name__ == "__main__":
     # Testing Code
 
     if (sys.argv[1] == 'test'):
-        test = 'beatles.txt'
+        # test = 'beatles.txt'
         code = generate(test, 5, 3)
         x,y = code.text_encoder()
         print(f' the shape of x: {x.shape} (num of sequences x window size x vocab size)')
         print(f' the shape of y: {y.shape} (num of sequences x window size x vocab size)')
 
-        # method 1 tester *** output his sample ***
-
+        # # method 1 tester *** output his sample ***
+        #
         # sample = 'hello, how are you?'
         # win_size = 5
         # stride_size = 3
