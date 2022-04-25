@@ -2,6 +2,7 @@ import sys
 from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 import random
 
@@ -103,9 +104,10 @@ class generate:
 
         sample = self.load_text(self.sample)
         encoded = self.idiot_convert_to(sample)
+        print(type(encoded))
 
         # ****decode back to text from numbers**** #
-        de = self.idiot_convert_out(sample, encoded)
+        #de = self.idiot_convert_out(sample, encoded)
 
         og = [] #old
         en = [] #new
@@ -134,24 +136,26 @@ def acc_loss_plotting(mod):
         1. Accuracy vs Epoch
         2. Loss vs Epoch
     '''
-    plt.figure(figsize=(15, 10))
+    #plt.figure(figsize=(15, 10))
+    plt.subplot(1, 2, 1)
     plt.plot(mod.history['accuracy'])
     plt.plot(mod.history['val_accuracy'])
-    plt.title('Race Classification')
+    plt.title('Model Results - Accuracy')
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
     plt.legend(['train', 'validation'])
     #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_acc.png')
-    plt.show()
 
-    plt.figure(figsize=(15, 10))
+    #plt.figure(figsize=(15, 10))
+    plt.subplot(1, 2, 2)
     plt.plot(mod.history['loss'])
     plt.plot(mod.history['val_loss'])
-    plt.title('Race Classification')
+    plt.title('Model Results - Loss')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['train', 'validation'])
     #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_loss.png')
+    plt.tight_layout()
     plt.show()
 
 def LSTM_model(x, y, hid_state_size):
@@ -164,24 +168,33 @@ def LSTM_model(x, y, hid_state_size):
     model = Sequential()
     model.add(LSTM(hid_state_size, input_shape=(x.shape[1], x.shape[2]), return_sequences=True))
     model.add(Dropout(0.2))
-    #model.add(LSTM(256, return_sequences=True))
-    #model.add(Dropout(0.2))
-    #model.add(LSTM(128, return_sequences=True))
-    #model.add(Dropout(0.2))
     model.add(Dense(y.shape[2], activation='softmax'))
     model.summary()
     opt = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
-    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=50, validation_data=(Xval, Yval),
+    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=350, validation_data=(Xval, Yval),
                           callbacks=[early_stopping])
-
-    #best_score = max(model_out.history['val_accuracy'])
-
 
     #gen_conf_mat(Yval, predictions)
     acc_loss_plotting(model_out)
     return model_out
+
+# modified from https://stackoverflow.com/questions/36864774/python-keras-how-to-access-each-epoch-prediction
+class Gen_text(tf.keras.callbacks.Callback):
+    def __init__(self, model, XVal, N):
+        self.model = model
+        self.XVal = XVal
+        self.N = N
+        self.epoch_num = 0
+
+    def on_epoch_end(self, epoch, log={}):
+        if self.epoch_num % self.N == 0:
+            pred = self.model.predict(self.XVal)
+            print('y predicted: ', pred)
+        self.epoch_num += 1
+
+    # Use callbacks=[CustomCallback(model, x_test, y_test)])
 
 def simpleRNN_model(x, y, hid_state_size):
     '''
@@ -198,8 +211,13 @@ def simpleRNN_model(x, y, hid_state_size):
     opt = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 10)
-    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=100, validation_data=(Xval, Yval),
-                          callbacks=[early_stopping])
+
+    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=1, validation_data=(Xval, Yval),
+                          callbacks=[early_stopping,
+                                     Gen_text(model, Xval, 10)])
+
+    acc_loss_plotting(model_out)
+
     return model_out
 
 
@@ -214,40 +232,6 @@ if __name__ == "__main__":
         print(f' the shape of x: {x.shape} (num of sequences x window size x vocab size)')
         print(f' the shape of y: {y.shape} (num of sequences x window size x vocab size)')
 
-        # t = [',', '5', 'v', ')', '3', '7', 'm', 'l', ':', '9', 'd', 's', 'o', 'n', 'k', 'x', 't', '4', 'a', 'y', '1', 'u',
-        #  '0', "'", '2', '’', 'i', 'c', '8', '.', 'z', 'j', 'p', 'e', 'g', '?', 'w', 'h', '-', 'b', ' ', 'q', 'f', 'r',
-        #  '\n', '(', '!', '6']
-        # num2alphadict = dict(zip(range(0, len(t)), t))
-        # num2alphadict2 = dict(zip(t, range(0, len(t))))
-        #
-        # str = 'a day in the life i read the news today oh boy abo'
-        # print(str[0])
-        # print(num2alphadict2[str[0]])
-        #
-        # print(num2alphadict)
-        # print(num2alphadict2)
-
-
-        # t = x[0]
-        # print(t)
-        # test = np.argmax(x[0:10], axis=-1)
-        #
-        # u = []
-        # for i in range(len(test)):
-        #     t = [chr(x) for x in test[i]]
-        #     u.append(t)
-        # print(u)
-        # tt = test[0]
-        # print(tt)
-        # for k in range(len(test)):
-        #         tt = test[k]
-        #         print(chr(tt[k]))
-
-        # y = [0, 1, 2, 0, 4, 5]
-        # Y = to_categorical(y, num_classes=len(y))
-        # print(Y)
-        # y = np.argmax(Y, axis=-1)
-        # print(y)
 
         # # method 1 tester *** output his sample ***
 
@@ -291,6 +275,9 @@ if __name__ == "__main__":
 
         mod = LSTM_model(x, y, hid_state_size)
 
+        pd.DataFrame.from_dict(mod.history).to_csv(f'history_lstm_{hid_state_size}_winsize{x.shape[1]}_stride{stride_size}.csv',
+                                                         index=False)
+
     elif (sys.argv[1] == 'simplernn'):
         hid_state_size = int(sys.argv[2])
         win_size = int(sys.argv[3])
@@ -306,7 +293,9 @@ if __name__ == "__main__":
 
         mod = simpleRNN_model(x, y, hid_state_size)
 
+        pd.DataFrame.from_dict(mod.history).to_csv(f'history_simpleRNN_{hid_state_size}_winsize{x.shape[1]}_stride{stride_size}.csv',
+                                                         index=False)
 
-    # elif (sys.argv[1] == 'task1'):
+
 
 
