@@ -1,9 +1,6 @@
 import sys
 from sklearn.preprocessing import OneHotEncoder
 import numpy as np
-import matplotlib.pyplot as plt
-
-import random
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential, Model
@@ -38,55 +35,13 @@ class generate:
         return contents
 
     def x_y_one_hot(self, x, y):
-        x_oneHOT = to_categorical(x) #num_classes=48) #num_classes=47)
+        x_oneHOT = to_categorical(x) #num_classes=47)
         y_oneHOT = to_categorical(y) #num_classes=47)
         return x_oneHOT, y_oneHOT
 
-    def idiot_convert_to(self, sample):
-        '''
-        Encodes each character
-
-        Input:
-        sample -> string of text
-
-        output:
-        encoded -> numerical encoding
-
-        '''
-        random.seed(13)
-        ugh = list(set(sample))
-        dict_convert_to = dict(zip(ugh, range(0, len(ugh))))
-
-        encoded = []
-        for i in range(len(sample)):
-            convert = dict_convert_to[sample[i]]
-            encoded.append(convert)
-        return encoded
-
-    def idiot_convert_out(self, sample, encoded):
-        '''
-        decodes each character
-
-        Input:
-        sample -> OG string of text
-        encoded -> numerical encoding
-
-        output:
-        decoded -> letters and chars
-        '''
-        random.seed(13)
-        ugh = list(set(sample))
-        dict_convert_out = dict(zip(range(0, len(ugh)), ugh))
-
-        decoded = []
-        for i in range(len(encoded)):
-            convert = dict_convert_out[encoded[i]]
-            decoded.append(convert)
-        return decoded
-
     def text_encoder(self):
         '''
-        Encodes each character of text to numeric val
+        Encodes each character of text to unicode
         and generates x,y vector according to a user
         defined window and stride size. finally,
         one hot encodes x and y vectors..
@@ -102,10 +57,11 @@ class generate:
         '''
 
         sample = self.load_text(self.sample)
-        encoded = self.idiot_convert_to(sample)
-
-        # ****decode back to text from numbers**** #
-        de = self.idiot_convert_out(sample, encoded)
+        encoded = []
+        for i in sample:
+            convert = ord(i) # ord() accepts a string of length 1 as an
+                             # argument and returns the unicode code point representation of the passed argument
+            encoded.append(convert)
 
         og = [] #old
         en = [] #new
@@ -114,10 +70,6 @@ class generate:
 
         x = og[::self.stride_size] #keeps only the items of specified stride size
         x = np.asarray(x)
-
-        # print(f'unique count {len(np.unique(x))}')
-        # print(f'unique {np.unique(x)}')
-
         for i in range(len(encoded) - self.win_size + 1):
             en.append(encoded[i+1: i + self.win_size + 1]) #+ 1 added
 
@@ -136,21 +88,19 @@ def acc_loss_plotting(mod):
     '''
     plt.figure(figsize=(15, 10))
     plt.plot(mod.history['accuracy'])
-    plt.plot(mod.history['val_accuracy'])
     plt.title('Race Classification')
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
-    plt.legend(['train', 'validation'])
+    #plt.legend(['train', 'validation'])
     #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_acc.png')
     plt.show()
 
     plt.figure(figsize=(15, 10))
     plt.plot(mod.history['loss'])
-    plt.plot(mod.history['val_loss'])
     plt.title('Race Classification')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
-    plt.legend(['train', 'validation'])
+    #plt.legend(['train', 'validation'])
     #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_loss.png')
     plt.show()
 
@@ -173,14 +123,8 @@ def LSTM_model(x, y, hid_state_size):
     opt = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
-    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=50, validation_data=(Xval, Yval),
+    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=100, validation_data=(Xval, Yval),
                           callbacks=[early_stopping])
-
-    #best_score = max(model_out.history['val_accuracy'])
-
-
-    #gen_conf_mat(Yval, predictions)
-    acc_loss_plotting(model_out)
     return model_out
 
 def simpleRNN_model(x, y, hid_state_size):
@@ -208,26 +152,11 @@ if __name__ == "__main__":
     # Testing Code
 
     if (sys.argv[1] == 'test'):
-        test = 'beatles.txt'
-        code = generate(test, 5, 3)
-        x,y = code.text_encoder()
-        print(f' the shape of x: {x.shape} (num of sequences x window size x vocab size)')
-        print(f' the shape of y: {y.shape} (num of sequences x window size x vocab size)')
-
-        # t = [',', '5', 'v', ')', '3', '7', 'm', 'l', ':', '9', 'd', 's', 'o', 'n', 'k', 'x', 't', '4', 'a', 'y', '1', 'u',
-        #  '0', "'", '2', '’', 'i', 'c', '8', '.', 'z', 'j', 'p', 'e', 'g', '?', 'w', 'h', '-', 'b', ' ', 'q', 'f', 'r',
-        #  '\n', '(', '!', '6']
-        # num2alphadict = dict(zip(range(0, len(t)), t))
-        # num2alphadict2 = dict(zip(t, range(0, len(t))))
-        #
-        # str = 'a day in the life i read the news today oh boy abo'
-        # print(str[0])
-        # print(num2alphadict2[str[0]])
-        #
-        # print(num2alphadict)
-        # print(num2alphadict2)
-
-
+        # test = 'beatles.txt'
+        # code = generate(test, 5, 3)
+        # x,y = code.text_encoder()
+        # print(f' the shape of x: {x.shape} (num of sequences x window size x vocab size)')
+        # print(f' the shape of y: {y.shape} (num of sequences x window size x vocab size)')
         # t = x[0]
         # print(t)
         # test = np.argmax(x[0:10], axis=-1)
@@ -251,30 +180,30 @@ if __name__ == "__main__":
 
         # # method 1 tester *** output his sample ***
 
-        # sample = 'hello, how are you?'
-        # win_size = 5
-        # stride_size = 3
-        # encoded = []
-        # for i in sample:
-        #     convert = ord(i)  # ord() accepts a string of length 1 as an
-        #     # argument and returns the unicode code point representation of the passed argument
-        #     encoded.append(convert)
-        #
-        # og = []  # old
-        # en = []  # new
-        # for i in range(len(sample) - win_size + 1):
-        #     og.append(sample[i: i + win_size])
-        #
-        # x = og[::stride_size]
-        #
-        # for i in range(len(sample) - win_size + 1):
-        #     en.append(sample[i + 1: i + win_size + 1])
-        #
-        # y = en[::stride_size]
-        #
-        # print(x)
-        # for i in range(len(x)):
-        #     print(f'x{i}: {x[i]} ~ y{i}: {y[i]}')
+        sample = 'hello, how are you?'
+        win_size = 5
+        stride_size = 3
+        encoded = []
+        for i in sample:
+            convert = ord(i)  # ord() accepts a string of length 1 as an
+            # argument and returns the unicode code point representation of the passed argument
+            encoded.append(convert)
+
+        og = []  # old
+        en = []  # new
+        for i in range(len(sample) - win_size + 1):
+            og.append(sample[i: i + win_size])
+
+        x = og[::stride_size]
+
+        for i in range(len(sample) - win_size + 1):
+            en.append(sample[i + 1: i + win_size + 1])
+
+        y = en[::stride_size]
+
+        print(x)
+        for i in range(len(x)):
+            print(f'x{i}: {x[i]} ~ y{i}: {y[i]}')
 
     elif (sys.argv[1] == 'lstm'):
         hid_state_size = int(sys.argv[2])
@@ -308,5 +237,3 @@ if __name__ == "__main__":
 
 
     # elif (sys.argv[1] == 'task1'):
-
-
