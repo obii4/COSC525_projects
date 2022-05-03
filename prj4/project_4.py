@@ -173,7 +173,7 @@ def LSTM_model(x, y, hid_state_size):
     opt = tf.keras.optimizers.Adam(learning_rate=0.001)
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
-    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=350, validation_data=(Xval, Yval),
+    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=500, validation_data=(Xval, Yval),
                           callbacks=[early_stopping])
 
     #gen_conf_mat(Yval, predictions)
@@ -212,9 +212,8 @@ def simpleRNN_model(x, y, hid_state_size):
     model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=opt)
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor = 'val_loss', patience = 10)
 
-    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=1, validation_data=(Xval, Yval),
-                          callbacks=[early_stopping,
-                                     Gen_text(model, Xval, 10)])
+    model_out = model.fit(Xtrain, Ytrain, batch_size=1024, epochs=500, validation_data=(Xval, Yval),
+                          callbacks=[early_stopping]) #callbacks=[early_stopping, Gen_text(model, Xval, 10)])
 
     acc_loss_plotting(model_out)
 
