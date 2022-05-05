@@ -132,10 +132,15 @@ print("Training...")
 for i in range(1000):
     #sample random images from training set
     idx = np.random.randint(0, x_train.shape[0], batch_size)
+    print(f"xtrain shape {x_train.shape}")
     imgs = x_train[idx]
     #sample random noise and put it through generator
     noise = np.random.uniform(-1.0, 1.0, size=[batch_size, 100])
     images_fake = generator.predict(noise)
+    print(f"Noise shape: {noise.shape}")
+
+    print(f"True Images Shape: {imgs.shape}")
+    print(f"Fake Images Shape: {images_fake.shape}")
     #create training set minibatch
     x=np.concatenate((imgs,images_fake))
     print(x.shape)
