@@ -22,7 +22,7 @@ import numpy as np
 from PIL import Image, ImageOps
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-
+import time
 
 # Join various path components
 tumors_images_path = os.path.join(os.getcwd(), "data", "tumor", "resized")
@@ -89,6 +89,38 @@ class ImageLoader:
         return images_all_out
 
 
+
+def acc_loss_plotting(mod):
+    '''
+    Takes a trained model and summarizes training through
+    plotting:
+        1. Accuracy vs Epoch
+        2. Loss vs Epoch
+    '''
+    #plt.figure(figsize=(15, 10))
+    plt.subplot(1, 2, 1)
+    plt.plot(mod.history['accuracy'])
+    plt.plot(mod.history['val_accuracy'])
+    plt.title('Model Results - Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'])
+    #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_acc.png')
+
+    #plt.figure(figsize=(15, 10))
+    plt.subplot(1, 2, 2)
+    plt.plot(mod.history['loss'])
+    plt.plot(mod.history['val_loss'])
+    plt.title('Model Results - Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'validation'])
+    #plt.savefig('/Users/chrisobrien/Desktop/grad school/courses/spring 2022/cosc 525/COSC525_projects/prj3/figs_final/task3_race_loss.png')
+    plt.tight_layout()
+    plt.show()
+
+
+
 # MNIST dataset
 #(x_train, y_train), (x_test, y_test) = mnist.load_data()
 
@@ -105,7 +137,7 @@ original_dim = image_size * image_size
 #x_train = np.expand_dims(x_train, axis=3)
 print(x_train.shape)
 # network parameters
-batch_size = 10
+batch_size = 100
 
 n=10
 plt.figure(figsize=(20, 2))
@@ -127,7 +159,7 @@ dropout = 0.4
 depth=64
 #dim=7  # mnist dim size 28/4=7 so 180/4 = 45 will work???
 dim=45
-input_dim_ = 50
+input_dim_ = 25
 
 generator = Sequential()
 generator.add(Dense(dim*dim*depth, input_dim=input_dim_))
@@ -211,35 +243,50 @@ y=np.concatenate((valid,fake))
 
 print("Training...")
 
+
+num_epochs = 1400
+
+losses = np.zeros((num_epochs, 3))
+
+
 #training procedure
-for i in range(500):
+for i in range(num_epochs):
+    t0 = time.time()
     #sample random images from training set
     idx = np.random.randint(0, x_train.shape[0], batch_size)
-    #print(f"index: {idx}")
-    #print(f"xtrain shape {x_train.shape}")
     imgs = x_train[idx,]
+
     #sample random noise and put it through generator
     noise = np.random.uniform(-1.0, 1.0, size=[batch_size, input_dim_])
     images_fake = generator.predict(noise)
-    #print(f"Noise shape: {noise.shape}")
-
-    #print(f"True Images Shape: {imgs.shape}")
-    #print(f"Fake Images Shape: {images_fake.shape}")
 
     #create training set minibatch
     x=np.concatenate((imgs,images_fake))
-    print(x.shape)
+
     #train discriminator
     d_loss=discriminator.train_on_batch(x,y)
+
     #train generator (entire GAN)
     noise = np.random.uniform(-1.0, 1.0, size=[batch_size, input_dim_])
     g_loss = GAN.train_on_batch(noise, valid)
-    print('{} d_loss: {}, g_loss{}'.format(i,d_loss,g_loss))
+
+    t1 = time.time()
+    epoch_time = t1-t0
+    print('{} d_loss: {}, g_loss{}, epoch_time{}'.format(i,d_loss,g_loss,epoch_time))
+
+    losses[i,:] = np.array([i, g_loss[0], d_loss[0]])
 
 
 
-    #plotting generated images
 
+plt.plot(losses[:,0], losses[:,1], label='Generator Loss')
+plt.plot(losses[:,0], losses[:,2], label='Discriminator Loss')
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend(loc='upper right')
+
+
+#plotting generated images
 print("Trained. Plotting")
 
 
