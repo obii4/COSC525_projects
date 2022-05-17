@@ -12,6 +12,9 @@ from tensorflow.keras.utils import plot_model
 from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers
 
+#from keras.models import save_model, load_model
+import tensorflow as tf
+
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -137,7 +140,7 @@ original_dim = image_size * image_size
 #x_train = np.expand_dims(x_train, axis=3)
 print(x_train.shape)
 # network parameters
-batch_size = 100
+batch_size = 80
 
 n=10
 plt.figure(figsize=(20, 2))
@@ -244,7 +247,7 @@ y=np.concatenate((valid,fake))
 print("Training...")
 
 
-num_epochs = 1400
+num_epochs = 10
 
 losses = np.zeros((num_epochs, 3))
 
@@ -303,4 +306,26 @@ for i in range(1,n):
     ax.get_yaxis().set_visible(False)
 plt.show()
 
+
+#save_model(generator, 'generator_model.h5')
+
+print('Model Saved!')
+
+
 print("End")
+
+
+##from keras.models import save_model, load_model
+
+## Creates a HDF5 file 'my_model.h5' 
+#save_model(model, 'my_model.h5') # model, [path + "/"] name of model
+
+## Deletes the existing model
+#del model  
+
+## Returns a compiled model identical to the previous one
+#new_model = load_model('my_model.h5')
+
+
+# Creates a HDF5 file 'my_model.h5'
+generator = tf.keras.models.save_model(generator, r"C:\Users\jaypi\source\COSC525\COSC525_projects\final_prj\generator_model2.h5")
