@@ -140,7 +140,7 @@ original_dim = image_size * image_size
 #x_train = np.expand_dims(x_train, axis=3)
 print(x_train.shape)
 # network parameters
-batch_size = 80
+batch_size = 100
 
 n=10
 plt.figure(figsize=(20, 2))
@@ -247,7 +247,7 @@ y=np.concatenate((valid,fake))
 print("Training...")
 
 
-num_epochs = 5000
+num_epochs = 4000
 print(f"num_epochs ={num_epochs}")
 
 losses = np.zeros((num_epochs, 3))
@@ -288,7 +288,7 @@ plt.plot(losses[:,0], losses[:,2], label='Discriminator Loss')
 plt.xlabel("Epochs")
 plt.ylabel("Loss")
 plt.legend(loc='upper right')
-
+plt.savefig("loss_plot.png", dpi=150)
 
 #plotting generated images
 print("Trained. Plotting")
