@@ -140,7 +140,7 @@ original_dim = image_size * image_size
 #x_train = np.expand_dims(x_train, axis=3)
 print(x_train.shape)
 # network parameters
-batch_size = 5
+batch_size = 80
 
 n=10
 plt.figure(figsize=(20, 2))
@@ -247,7 +247,7 @@ y=np.concatenate((valid,fake))
 print("Training...")
 
 
-num_epochs = 400
+num_epochs = 10
 
 losses = np.zeros((num_epochs, 3))
 
