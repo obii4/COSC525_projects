@@ -248,6 +248,7 @@ print("Training...")
 
 
 num_epochs = 5000
+print(f"num_epochs ={num_epochs}")
 
 losses = np.zeros((num_epochs, 3))
 
