@@ -247,7 +247,7 @@ y=np.concatenate((valid,fake))
 print("Training...")
 
 
-num_epochs = 10
+num_epochs = 5000
 
 losses = np.zeros((num_epochs, 3))
 
@@ -328,4 +328,4 @@ print("End")
 
 
 # Creates a HDF5 file 'my_model.h5'
-generator = tf.keras.models.save_model(generator, r"C:\Users\jaypi\source\COSC525\COSC525_projects\final_prj\generator_model2.h5")
+generator = tf.keras.models.save_model(generator, r"C:\Users\jaypi\source\COSC525\COSC525_projects\final_prj\generator_model_colab2.h5")
